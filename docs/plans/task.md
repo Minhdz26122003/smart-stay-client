@@ -1,0 +1,4 @@
+- [/] Task 1: Setup Core Dependencies & Project Config
+- [ ] Task 2: Implement Core Theme System
+- [ ] Task 3: Setup GoRouter & Main App Shell
+- [ ] Task 4: Setup Dependency Injection

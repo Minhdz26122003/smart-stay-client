@@ -1,0 +1,103 @@
+PHÂN TÍCH NHU CẦU VÀ MONG MUỐN CỦA CÁC CHỦ THỂ (USER NEEDS & PAIN POINTS)
+DỰ ÁN: RENTAL ROOM MANAGER (RRM)
+
+MỤC LỤC:
+1. Chủ nhà (Landlord / Property Manager)
+2. Người thuê (Tenant)
+3. Người tìm phòng (Room Seeker / Guest)
+
+-----------------------------------------------------
+1. CHỦ NHÀ
+-----------------------------------------------------
+
+- Thường xuyên nhầm lẫn, quên ghi chép sổ sách thu chi dẫn đến thất thoát tiền.
+- Mất quá nhiều thời gian đi từng phòng chốt số điện, số nước hàng tháng.
+- Khó kiểm soát danh sách người thuê: ai đang thuê, ai đã chuyển đi, ai còn nợ tiền, ai sắp hết hạn hợp đồng.
+- Lúc báo công an tạm trú phải lục lại giấy tờ tuỳ thân, ảnh chụp CCCD/CMND rất lộn xộn trong Zalo/Tin nhắn.
+- Khâu quản lý tài sản bàn giao (tủ lạnh, máy lạnh, chìa khóa...) kém, khi tính tiền cọc dễ cãi vã.
+- Khó tìm khách mới lấp chỗ trống ngay lập tức khi khách cũ báo chuyển đi.
+
+* Mong muốn (Desires/Requirements):
+1.1. Quản lý trạng thái phòng và tài sản:
+   - Dễ dàng nhìn thấy tổng quan có bao nhiêu phòng trống, phòng đang sửa chữa, phòng đang có khách thuê.
+   - Có biên bản bàn giao điện tử các thiết bị trong phòng kèm hình ảnh để làm bằng chứng khi check-out/trừ cọc.
+
+1.2. Quản lý hệ thống tài chính & Tính tiền tự động:
+   - Chỉ cần nhập "Số Mới" của Điện/Nước, hệ thống tự động trừ "Số Cũ" để ra số lượng sử dụng và tính ra thành tiền.
+   - Bảng cấu hình giá dịch vụ linh hoạt (Giá điện ưu đãi, phí rác theo người, phí quản lý theo phòng, wifi, v.v.).
+   - Chỉ với 1 nút bấm "Chốt hóa đơn", tự động tính tổng tiền (Tiền nhà + Dịch vụ) và gửi thông báo điện tử ngay lập tức cho người thuê.
+   - Phân loại rõ: Hoá đơn nào "Đã thu", "Chưa thu", "Thu thiếu" (còn nợ).
+
+1.3. Quản trị Khách thuê và Hợp đồng (Pháp lý):
+   - Lưu trữ các thông tin bảo mật (Hình ảnh CCCD 2 mặt) chuyên nghiệp.
+   - Cảnh báo các hợp đồng sắp hết hạn (ví dụ: cách 30 ngày) để chủ động đàm phán gia hạn.
+   - Nắm được phòng đó có cụ thể bao nhiêu người ở (Người đại diện ký hợp đồng và Mọi người ở ghép).
+
+1.4. Đăng tải và cho thuê (Marketplace):
+   - Có thể "Public" các phòng sắp trống / đang trống lên Sàn giao dịch với đầy đủ hình ảnh, mô tả chi tiết, giá tiền để người dùng khác tìm thấy.
+   - Tiếp nhận tin nhắn/đặt lịch xem phòng trực tiếp từ người lạ đang muốn tìm phòng.
+
+1.5. Quản lý Ra vào & An ninh (Security):
+   - Giám sát nhật ký ra vào tổng thể của toàn bộ cư dân.
+   - Quản lý xe thông minh: Tích hợp nhận diện biển số qua camera (AI LPR) để kiểm soát bãi đỗ.
+   - Cảnh báo an ninh: Nhận thông báo nếu cửa chính mở quá lâu hoặc có xâm nhập trái phép vào ban đêm.
+1.6. Tự động hóa vận hành (Operations & Tech):
+   - Chụp ảnh OCR: Tự động trích xuất chỉ số điện/nước từ ảnh chụp đồng hồ để lập hóa đơn.
+   - Cấu hình dịch vụ lẻ: Tự động tính phí rác, máy giặt, wifi theo cấu hình riêng từng phòng.
+   - Hệ thống nhắc nợ: Tự động gửi notification/tin nhắn định kỳ cho đến khi hóa đơn được thanh toán.
+
+1.7. Khảo sát cư dân: Công cụ lấy ý kiến người thuê về việc nâng cấp, sửa chữa cơ sở hạ tầng.
+
+
+-----------------------------------------------------
+2. NGƯỜI THUÊ 
+-----------------------------------------------------
+
+- Bị "sốc" hoá đơn cuối tháng do không kiểm soát được lượng điện/nước sử dụng hoặc bị tính sai số.
+- Khi đồ đạc trong phòng hỏng (vòi nước rỉ, bóng đèn cháy), nhắn tin báo chủ nhà nhưng trôi tin hoặc chủ nhà mải việc quên mất.
+- Không nhớ các điều khoản chi tiết liên quan đến việc huỷ hợp đồng sớm sẽ mất cọc hay bị đền bù gì.
+- Phải chuyển tiền thủ công xong chụp lại uỷ nhiệm chi gửi Zalo báo cáo, rất phiền phức.
+
+* Mong muốn (Desires/Requirements):
+2.1. Tính minh bạch tài chính (Hóa đơn):
+   - Nhận hóa đơn điện tử siêu chi tiết hàng tháng: Số điện cũ/mới bao nhiêu, đơn giá từng khoản phí.
+   - Lưu trữ lịch sử tất cả các tháng đã đóng để so sánh mức chi tiêu bản thân.
+   - Nút xác nhận thanh toán hoặc tích hợp sẵn mã QR chuyển khoản quét là xong, không cần hỏi số tài khoản nữa.
+
+2.2. Trải nghiệm sống & Báo cáo sự cố:
+   - Khi có đồ hỏng, có thể chụp ảnh, điền form gửi "Yêu cầu sửa chữa" thẳng cho chủ nhà. Sau đó theo dõi xem chủ nhà đã "Tiếp nhận" hay hẹn ngày nào thợ qua sửa.
+   - Có một bảng tin chung (Notice Board) để cập nhật thông báo của khu trọ (Lịch vệ sinh hành lang, Lịch cắt điện nước của thành phố).
+
+2.3. Quản lý giấy tờ cá nhân:
+   - Có luôn bản PDF hoặc hình ảnh biên bản Hợp đồng điện tử trong app để xem lại nội quy, tiền cọc bất cứ khi nào.
+   - Khai báo hồ sơ (CCCD/thông tin cá nhân) cho chủ nhà dễ dàng theo chuẩn, không sợ bị thất lạc thông tin rải rác trên mạng xã hội.
+2.4.Thông báo:
+    + Nhận tin nhắn nhắc nợ tự động, xem bảng tin chung và tham gia bình chọn/khảo sát ý kiến cư dân.
+    + Thông báo cho chủ nhà/bảo vệ khi có bạn bè đến chơi hoặc ở lại qua đêm để đảm bảo an ninh.
+2.5.An ninh & Vào ra (Access Control):
+    + Xem nhật ký ra vào cá nhân để đảm bảo tính riêng tư và an toàn.
+    + Đăng ký biển số xe và theo dõi trạng thái an toàn của xe trong bãi.
+    + Khai báo khách ghé thăm hoặc người thân ở lại qua đêm
+2.6. Quy trình trả phòng: Chốt số điện nước cuối, kiểm tra tài sản so với lúc nhận phòng, tính toán số tiền cọc còn lại phải trả.
+2.7. Đánh giá (Review): Người thuê đánh giá chủ nhà và ngược lại để xây dựng cộng đồng thuê trọ văn minh.
+
+-----------------------------------------------------
+3. NGƯỜI TÌM PHÒNG
+-----------------------------------------------------
+
+- Hay gặp tình trạng "treo đầu dê bán thịt chó": Ảnh một đằng, phòng thực tế một nẻo, hoặc lên tới nơi báo hết phòng, bị đẩy sang phòng khác giá đắt hơn.
+- Không biết thông tin các phụ phí ập tới mập mờ (Chỉ ghi tiền thuê rẻ nhưng giá điện 5k/số, phí mạng cao).
+- Đi tìm phòng trong các nhóm Facebook rất lộn xộn, bị môi giới rác làm phiền.
+- Ngại đi lại nhiều nơi, tốn xăng xe và thời gian xem các căn hộ không phù hợp.
+
+* Mong muốn (Desires/Requirements):
+3.1. Tìm kiếm và Đánh giá chân thực nhất:
+   - Giao diện tìm kiếm trực quan theo Khu vực/Khoảng giá/Tiện ích (Máy giặt chung/riêng, Chấp nhận nuôi thú cưng hay không).
+   - Minh bạch mọi phí tổn ngay từ trước khi hỏi: Giá thuê bao nhiêu? Điện/Nước/Phí rác tính thế nào? Cọc mấy tháng?
+   - Các hình ảnh xác thực 100%, hoặc tốt hơn có đánh giá (Reviews) của những người từng sống ở đó về thái độ của chủ nhà/sự an ninh của khu trọ.
+
+3.2. Tiện lợi trong giao tiếp:
+   - Nhắn tin (Chat in-app) hoặc gọi điện trực tiếp từ app cho chủ nhà để xác nhận phòng đó còn trống không.
+   - Chức năng "Đặt lịch hẹn xem phòng": Chọn giờ rảnh trong ngày để chủ nhà biết và đón tiếp đàng hoàng.
+   - Có thể lưu các căn phòng ưng ý vào mục "Yêu thích" để cân nhắc sau.
+
