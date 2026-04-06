@@ -15,7 +15,11 @@ class AppTheme {
         onSurface: AppColors.onSurface,
       ),
       textTheme: const TextTheme(
-        bodyMedium: TextStyle(fontSize: 14, color: AppColors.onSurface),
+        displaySmall: TextStyle(fontSize: 28),
+        headlineLarge: TextStyle(fontSize: 24),
+        bodyLarge: TextStyle(fontSize: 14),
+        bodyMedium: TextStyle(fontSize: 12, color: AppColors.onSurface),
+        bodySmall: TextStyle(fontSize: 10),
       ),
     );
   }

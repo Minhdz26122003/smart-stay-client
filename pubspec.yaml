@@ -41,6 +41,10 @@ dependencies:
   freezed_annotation: any
   json_annotation: any
   dartz: any
+  dio: any
+  flutter_secure_storage: any
+  pretty_dio_logger: any
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
