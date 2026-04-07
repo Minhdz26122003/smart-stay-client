@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../features/announcement/presentation/cubit/announcement_cubit.dart';
+import '../../../../features/announcement/presentation/cubit/announcement_state.dart';
+import '../../../../core/di/injection_container.dart';
 
 class LandlordAddBoardPostScreen extends StatefulWidget {
-  const LandlordAddBoardPostScreen({super.key});
+  /// propertyId passed via GoRouter extra
+  final String propertyId;
+  const LandlordAddBoardPostScreen({super.key, required this.propertyId});
+
   @override
   State<LandlordAddBoardPostScreen> createState() =>
       _LandlordAddBoardPostScreenState();
@@ -12,7 +19,7 @@ class _LandlordAddBoardPostScreenState
     extends State<LandlordAddBoardPostScreen> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
-  bool _isSurvey = false;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -26,205 +33,190 @@ class _LandlordAddBoardPostScreenState
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: cs.onSurface),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Đăng thông báo mới',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isSurvey = false),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+    return BlocProvider(
+      create: (_) => sl<AnnouncementCubit>(),
+      child: BlocConsumer<AnnouncementCubit, AnnouncementState>(
+        listener: (context, state) {
+          if (state is AnnouncementSubmitSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: const Text('Đã đăng thông báo thành công! 📣'),
+              backgroundColor: cs.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ));
+            context.pop();
+          }
+          if (state is AnnouncementSubmitError) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Lỗi: ${state.message}'),
+              backgroundColor: cs.error,
+              behavior: SnackBarBehavior.floating,
+            ));
+          }
+        },
+        builder: (context, state) {
+          final isSending = state is AnnouncementSubmitting;
+
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F9FF),
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.close_rounded, color: cs.onSurface),
+                onPressed: () => context.pop(),
+              ),
+              title: Text(
+                'Đăng thông báo mới',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            body: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Info banner
+                    Container(
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: !_isSurvey ? cs.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: !_isSurvey ? cs.primary : cs.outline.withValues(alpha: 0.2),
-                        ),
+                        color: cs.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.campaign_rounded,
-                            size: 18,
-                            color: !_isSurvey ? Colors.white : cs.onSurface,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Thông báo',
+                      child: Row(children: [
+                        Icon(Icons.info_outline_rounded,
+                            color: cs.primary, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Thông báo sẽ được gửi đến tất cả các khách thuê trong khu trọ.',
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: !_isSurvey ? Colors.white : cs.onSurface,
-                            ),
+                                fontSize: 13,
+                                color: cs.onSurface.withValues(alpha: 0.7),
+                                height: 1.4),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _isSurvey = true),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _isSurvey ? Colors.blue.shade600 : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _isSurvey
-                              ? Colors.blue.shade600
-                              : cs.outline.withValues(alpha: 0.2),
                         ),
+                      ]),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title field
+                    _Label(label: 'Tiêu đề *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _titleController,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Vui lòng nhập tiêu đề' : null,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      decoration: _fieldDecoration(
+                          cs, 'Ví dụ: Thông báo cắt nước ngày 10/4...'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Body field
+                    _Label(label: 'Nội dung *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _bodyController,
+                      maxLines: 8,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Vui lòng nhập nội dung' : null,
+                      decoration: _fieldDecoration(
+                          cs, 'Nhập nội dung chi tiết thông báo...'),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Submit
+                    ElevatedButton.icon(
+                      onPressed: isSending
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
+                                context.read<AnnouncementCubit>().postAnnouncement(
+                                      propertyId: widget.propertyId,
+                                      title: _titleController.text.trim(),
+                                      body: _bodyController.text.trim(),
+                                    );
+                              }
+                            },
+                      icon: isSending
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : const Icon(Icons.send_rounded,
+                              color: Colors.white),
+                      label: Text(
+                        isSending ? 'Đang gửi...' : 'ĐĂNG BẢNG TIN',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, color: Colors.white),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.assessment_rounded,
-                            size: 18,
-                            color: _isSurvey ? Colors.white : cs.onSurface,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Khảo sát',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: _isSurvey ? Colors.white : cs.onSurface,
-                            ),
-                          ),
-                        ],
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(54),
+                        backgroundColor: cs.primary,
+                        disabledBackgroundColor:
+                            cs.primary.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                hintText: 'Tiêu đề bài viết...',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _bodyController,
-              maxLines: 8,
-              decoration: InputDecoration(
-                hintText: 'Nhập nội dung chi tiết...',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
-            ),
-            if (_isSurvey) ...[
-              const SizedBox(height: 24),
-              const Text(
-                'Tùy chọn khảo sát',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-              const SizedBox(height: 12),
-              for (int i = 0; i < 2; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Tùy chọn ${i + 1}',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: cs.outline.withValues(alpha: 0.1)),
-                      ),
-                      prefixIcon: Icon(Icons.circle_outlined,
-                          size: 16, color: cs.onSurface.withValues(alpha: 0.3)),
-                    ),
-                  ),
-                ),
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add_rounded, size: 20),
-                label: const Text('Thêm tùy chọn khác'),
-                style: TextButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                ),
-              ),
-            ],
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(_isSurvey ? 'Đã tạo khảo sát!' : 'Đã đăng bài!'),
-                  backgroundColor: cs.primary,
-                  behavior: SnackBarBehavior.floating,
-                ));
-                context.pop();
-              },
-              icon: const Icon(Icons.send_rounded, color: Colors.white),
-              label: const Text(
-                'ĐĂNG BẢNG TIN',
-                style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(54),
-                backgroundColor: cs.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(ColorScheme cs, String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(
+          color: cs.onSurface.withValues(alpha: 0.35), fontSize: 14),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.15)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.15)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: cs.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: cs.error, width: 1.5),
+      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  final String label;
+  const _Label({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Text(
+      label,
+      style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: cs.onSurface.withValues(alpha: 0.75)),
     );
   }
 }

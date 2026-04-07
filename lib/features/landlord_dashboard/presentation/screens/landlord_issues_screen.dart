@@ -171,7 +171,7 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
                         return GestureDetector(
                           onTap: () => context.push(
                             '/landlord/operations/issue-detail',
-                            extra: issue, // Pass ticket object
+                            extra: issue.copyWith(roomName: mappedRoomName), // Pass ticket with mapped roomName
                           ),
                           child: Container(
                             decoration: BoxDecoration(

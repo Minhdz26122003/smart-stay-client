@@ -11,6 +11,7 @@ import '../../../invoice/domain/entities/invoice.dart';
 import '../../../inventory/domain/entities/inventory_item.dart';
 import '../../../ticket/domain/entities/ticket.dart';
 import '../../../ticket/domain/entities/ticket_extensions.dart';
+import '../../../room/domain/entities/room.dart';
 
 final _vnd = NumberFormat('#,###', 'vi_VN');
 String _formatVnd(double amount) => '${_vnd.format(amount)} đ';
@@ -62,9 +63,16 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 12),
-                        Text('Lỗi tải dữ liệu', style: theme.textTheme.titleMedium),
+                        Text(
+                          'Lỗi tải dữ liệu',
+                          style: theme.textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 4),
                         Text(state.message, style: theme.textTheme.bodySmall),
                         const SizedBox(height: 16),
@@ -101,7 +109,11 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
   // ─────────────────────────────────────────────────────────────────────────
   // HEADER
 
-  Widget _buildHeader(BuildContext context, ColorScheme cs, RoomDetailState state) {
+  Widget _buildHeader(
+    BuildContext context,
+    ColorScheme cs,
+    RoomDetailState state,
+  ) {
     String title = 'Chi tiết phòng';
     String subtitle = '';
     String statusLabel = '...';
@@ -110,9 +122,12 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     if (state is RoomDetailLoaded) {
       final room = state.roomDetail.room;
       title = 'Phòng ${room.name}';
-      subtitle = '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
-      isOccupied = state.roomDetail.hasActiveTenant;
-      statusLabel = isOccupied ? 'Đang thuê' : (room.status.name == 'maintenance' ? 'Bảo trì' : 'Trống');
+      subtitle =
+          '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
+      isOccupied = room.status == RoomStatus.occupied;
+      statusLabel = isOccupied
+          ? 'Đang thuê'
+          : (room.status == RoomStatus.maintenance ? 'Bảo trì' : 'Trống');
     }
 
     return SliverAppBar(
@@ -126,7 +141,8 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-          onPressed: () => context.read<RoomDetailCubit>().loadRoomDetail(widget.roomId),
+          onPressed: () =>
+              context.read<RoomDetailCubit>().loadRoomDetail(widget.roomId),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -157,12 +173,17 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
-                          color: (isOccupied ? Colors.green : Colors.orange).withValues(alpha: 0.25),
+                          color: (isOccupied ? Colors.green : Colors.orange)
+                              .withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: (isOccupied ? Colors.green : Colors.orange).withValues(alpha: 0.5),
+                            color: (isOccupied ? Colors.green : Colors.orange)
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(
@@ -178,7 +199,10 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                         const SizedBox(width: 12),
                         Text(
                           subtitle,
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ],
@@ -208,11 +232,16 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                   onTap: () => setState(() => _tab = e.key),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: _tab == e.key ? cs.primary : Colors.transparent,
+                          color: _tab == e.key
+                              ? cs.primary
+                              : Colors.transparent,
                           width: 2.5,
                         ),
                       ),
@@ -261,10 +290,15 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
               title: 'Người thuê',
               icon: Icons.person_outline,
               child: tenant == null
-                  ? const Center(
+                  ? Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text('Phòng đang trống', style: TextStyle(color: Colors.grey)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          state.roomDetail.room.status == RoomStatus.occupied
+                              ? 'Lỗi dữ liệu: Chưa có thông tin người thuê/hợp đồng'
+                              : 'Phòng đang trống',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ),
                     )
                   : Column(
@@ -297,14 +331,19 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                                   Text(
                                     tenant.phone,
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: cs.onSurface.withValues(alpha: 0.5),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.phone_rounded, color: cs.primary),
+                              icon: Icon(
+                                Icons.phone_rounded,
+                                color: cs.primary,
+                              ),
                               onPressed: () {},
                             ),
                           ],
@@ -345,7 +384,10 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text('Chưa có chỉ số', style: TextStyle(color: Colors.grey)),
+                        child: Text(
+                          'Chưa có chỉ số',
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     )
                   : Row(
@@ -362,7 +404,8 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                               color: Colors.amber,
                             ),
                           ),
-                        if (elec != null && water != null) const SizedBox(width: 12),
+                        if (elec != null && water != null)
+                          const SizedBox(width: 12),
                         if (water != null)
                           Expanded(
                             child: _UtilityCard(
@@ -390,7 +433,8 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                   _InfoRow(
                     icon: Icons.straighten_rounded,
                     label: 'Diện tích',
-                    value: '${state.roomDetail.room.areaM2.toStringAsFixed(0)} m²',
+                    value:
+                        '${state.roomDetail.room.areaM2.toStringAsFixed(0)} m²',
                   ),
                   const SizedBox(height: 10),
                   _InfoRow(
@@ -462,7 +506,11 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -535,23 +583,30 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
         delegate: SliverChildListDelegate([
           if (openTickets.isNotEmpty) ...[
             _SectionHeader(title: 'Đang xử lý (${openTickets.length})'),
-            ...openTickets.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _TicketCard(ticket: t, theme: theme, cs: cs),
-                )),
+            ...openTickets.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _TicketCard(ticket: t, theme: theme, cs: cs),
+              ),
+            ),
             const SizedBox(height: 8),
           ],
           if (resolvedTickets.isNotEmpty) ...[
             _SectionHeader(title: 'Đã giải quyết (${resolvedTickets.length})'),
-            ...resolvedTickets.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _TicketCard(ticket: t, theme: theme, cs: cs),
-                )),
+            ...resolvedTickets.map(
+              (t) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _TicketCard(ticket: t, theme: theme, cs: cs),
+              ),
+            ),
           ],
           TextButton.icon(
             onPressed: () => context.push('/landlord/operations/issues'),
             icon: Icon(Icons.open_in_new_rounded, size: 16, color: cs.primary),
-            label: Text('Xem toàn bộ lịch sử', style: TextStyle(color: cs.primary)),
+            label: Text(
+              'Xem toàn bộ lịch sử',
+              style: TextStyle(color: cs.primary),
+            ),
           ),
         ]),
       ),
@@ -580,8 +635,12 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
       );
     }
 
-    final goodItems = items.where((i) => i.condition == ItemCondition.good).length;
-    final damagedItems = items.where((i) => i.condition != ItemCondition.good).length;
+    final goodItems = items
+        .where((i) => i.condition == ItemCondition.good)
+        .length;
+    final damagedItems = items
+        .where((i) => i.condition != ItemCondition.good)
+        .length;
 
     return SliverPadding(
       padding: const EdgeInsets.all(16),
@@ -597,11 +656,23 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             ),
             child: Row(
               children: [
-                _AssetStat(value: '${items.length}', label: 'Tổng', color: cs.primary),
+                _AssetStat(
+                  value: '${items.length}',
+                  label: 'Tổng',
+                  color: cs.primary,
+                ),
                 const SizedBox(width: 16),
-                _AssetStat(value: '$goodItems', label: 'Tốt', color: Colors.green),
+                _AssetStat(
+                  value: '$goodItems',
+                  label: 'Tốt',
+                  color: Colors.green,
+                ),
                 const SizedBox(width: 16),
-                _AssetStat(value: '$damagedItems', label: 'Hư hỏng', color: Colors.orange),
+                _AssetStat(
+                  value: '$damagedItems',
+                  label: 'Hư hỏng',
+                  color: Colors.orange,
+                ),
               ],
             ),
           ),
@@ -616,7 +687,9 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
               children: [
                 Text(
                   'Danh sách bàn giao (${items.length} món)',
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 ...items.asMap().entries.map(
@@ -651,7 +724,10 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: e.value.condition == ItemCondition.good
                                 ? Colors.green.withValues(alpha: 0.1)
@@ -684,7 +760,11 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
   // ─────────────────────────────────────────────────────────────────────────
   // BOTTOM BAR
 
-  Widget _buildBottomBar(BuildContext context, ColorScheme cs, RoomDetailState state) {
+  Widget _buildBottomBar(
+    BuildContext context,
+    ColorScheme cs,
+    RoomDetailState state,
+  ) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       color: Colors.white,
@@ -696,19 +776,24 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             label: const Text('Nhắn tin'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
-              onPressed: () => context.push('/landlord/operations/invoice-settle'),
+              onPressed: () =>
+                  context.push('/landlord/operations/invoice-settle'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: const Text(
                 'Chốt hóa đơn',
@@ -729,7 +814,11 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
-  const _SectionCard({required this.title, required this.icon, required this.child});
+  const _SectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -751,7 +840,9 @@ class _SectionCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 title,
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -803,7 +894,10 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.55)),
+          style: TextStyle(
+            fontSize: 13,
+            color: cs.onSurface.withValues(alpha: 0.55),
+          ),
         ),
         const Spacer(),
         Text(
@@ -852,23 +946,37 @@ class _UtilityCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
               const Spacer(),
               Text(
                 period,
-                style: TextStyle(fontSize: 10, color: cs.onSurface.withValues(alpha: 0.4)),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: cs.onSurface.withValues(alpha: 0.4),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             current,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: cs.onSurface),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: cs.onSurface,
+            ),
           ),
           Text(
             'Trước: $previous',
-            style: TextStyle(fontSize: 10, color: cs.onSurface.withValues(alpha: 0.45)),
+            style: TextStyle(
+              fontSize: 10,
+              color: cs.onSurface.withValues(alpha: 0.45),
+            ),
           ),
           const SizedBox(height: 4),
           Container(
@@ -879,7 +987,11 @@ class _UtilityCard extends StatelessWidget {
             ),
             child: Text(
               usage,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -892,7 +1004,11 @@ class _InvoiceCard extends StatelessWidget {
   final Invoice invoice;
   final ColorScheme cs;
   final ThemeData theme;
-  const _InvoiceCard({required this.invoice, required this.cs, required this.theme});
+  const _InvoiceCard({
+    required this.invoice,
+    required this.cs,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -901,75 +1017,92 @@ class _InvoiceCard extends StatelessWidget {
     final Color statusColor = isPaid
         ? Colors.green
         : isOverdue
-            ? Colors.red
-            : Colors.orange;
+        ? Colors.red
+        : Colors.orange;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: !isPaid
-            ? Border(left: BorderSide(color: statusColor, width: 3))
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                isPaid ? Icons.check_circle_rounded : Icons.schedule_rounded,
-                color: statusColor,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  invoice.periodLabel,
-                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+    return GestureDetector(
+      onTap: () {
+        context.push('/landlord/finance/invoice-detail', extra: invoice);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: !isPaid
+              ? Border(left: BorderSide(color: statusColor, width: 3))
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isPaid ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                  color: statusColor,
+                  size: 20,
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _formatVnd(invoice.totalAmount),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: isPaid ? cs.onSurface : statusColor,
-                      fontSize: 14,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    invoice.periodLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    invoice.status.displayName,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
-                  ),
-                ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatVnd(invoice.totalAmount),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: isPaid ? cs.onSurface : statusColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      invoice.status.displayName,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Breakdown details
+            if (invoice.breakdown != null) ...[
+              const Divider(height: 16),
+              _BreakdownRow(
+                label: 'Tiền phòng',
+                value: _formatVnd(invoice.breakdown!.rent),
               ),
+              _BreakdownRow(
+                label: 'Điện (${invoice.breakdown!.electricityConsumed} kWh)',
+                value: _formatVnd(invoice.breakdown!.electricityAmount),
+              ),
+              _BreakdownRow(
+                label: 'Nước (${invoice.breakdown!.waterConsumed} m³)',
+                value: _formatVnd(invoice.breakdown!.waterAmount),
+              ),
+              if (invoice.breakdown!.internet > 0)
+                _BreakdownRow(
+                  label: 'Internet',
+                  value: _formatVnd(invoice.breakdown!.internet),
+                ),
+              if (invoice.breakdown!.garbage > 0)
+                _BreakdownRow(
+                  label: 'Rác',
+                  value: _formatVnd(invoice.breakdown!.garbage),
+                ),
             ],
-          ),
-          // Breakdown details
-          if (invoice.breakdown != null) ...[
-            const Divider(height: 16),
-            _BreakdownRow(
-              label: 'Tiền phòng',
-              value: _formatVnd(invoice.breakdown!.rent),
-            ),
-            _BreakdownRow(
-              label: 'Điện (${invoice.breakdown!.electricityConsumed} kWh)',
-              value: _formatVnd(invoice.breakdown!.electricityAmount),
-            ),
-            _BreakdownRow(
-              label: 'Nước (${invoice.breakdown!.waterConsumed} m³)',
-              value: _formatVnd(invoice.breakdown!.waterAmount),
-            ),
-            if (invoice.breakdown!.internet > 0)
-              _BreakdownRow(label: 'Internet', value: _formatVnd(invoice.breakdown!.internet)),
-            if (invoice.breakdown!.garbage > 0)
-              _BreakdownRow(label: 'Rác', value: _formatVnd(invoice.breakdown!.garbage)),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -989,9 +1122,15 @@ class _BreakdownRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.55)),
+            style: TextStyle(
+              fontSize: 12,
+              color: cs.onSurface.withValues(alpha: 0.55),
+            ),
           ),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -1002,7 +1141,11 @@ class _TicketCard extends StatelessWidget {
   final Ticket ticket;
   final ThemeData theme;
   final ColorScheme cs;
-  const _TicketCard({required this.ticket, required this.theme, required this.cs});
+  const _TicketCard({
+    required this.ticket,
+    required this.theme,
+    required this.cs,
+  });
 
   Color get _statusColor {
     switch (ticket.status) {
@@ -1035,9 +1178,7 @@ class _TicketCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: _statusColor, width: 3),
-        ),
+        border: Border(left: BorderSide(color: _statusColor, width: 3)),
       ),
       child: Row(
         children: [
@@ -1047,7 +1188,11 @@ class _TicketCard extends StatelessWidget {
               color: _statusColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.engineering_rounded, size: 16, color: _statusColor),
+            child: Icon(
+              Icons.engineering_rounded,
+              size: 16,
+              color: _statusColor,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1056,7 +1201,9 @@ class _TicketCard extends StatelessWidget {
               children: [
                 Text(
                   ticket.title,
-                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1083,7 +1230,11 @@ class _TicketCard extends StatelessWidget {
                 ),
                 child: Text(
                   ticket.status.displayName,
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _statusColor),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _statusColor,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -1095,7 +1246,11 @@ class _TicketCard extends StatelessWidget {
                 ),
                 child: Text(
                   ticket.priorityEnum.displayName,
-                  style: TextStyle(fontSize: 9, color: _priorityColor, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: _priorityColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -1109,7 +1264,11 @@ class _TicketCard extends StatelessWidget {
 class _AssetStat extends StatelessWidget {
   final String value, label;
   final Color color;
-  const _AssetStat({required this.value, required this.label, required this.color});
+  const _AssetStat({
+    required this.value,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1117,7 +1276,11 @@ class _AssetStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
         ),
         Text(
           label,

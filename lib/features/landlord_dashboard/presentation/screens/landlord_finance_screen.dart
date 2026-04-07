@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import '../../../statistics/presentation/cubit/finance_summary_cubit.dart';
+import '../../../statistics/presentation/cubit/finance_summary_state.dart';
 
 class LandlordFinanceScreen extends StatefulWidget {
   const LandlordFinanceScreen({super.key});
@@ -23,6 +26,15 @@ class _LandlordFinanceScreenState extends State<LandlordFinanceScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  String _formatShort(double value) {
+    if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1).replaceAll('.0', '')}M';
+    } else if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(0)}K';
+    }
+    return value.toStringAsFixed(0);
   }
 
   @override
@@ -106,81 +118,96 @@ class _LandlordFinanceScreenState extends State<LandlordFinanceScreen>
 
           // ── Revenue Summary ──────────────────────────────────────────────────
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [cs.primary, cs.primary.withValues(alpha: 0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Doanh thu Tháng $_selectedMonth/2026',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+            child: BlocBuilder<FinanceSummaryCubit, FinanceSummaryState>(
+              builder: (context, state) {
+                if (state is FinanceSummaryLoaded) {
+                  final summary = state.summary;
+                  final collected = summary.totalRevenue - summary.unpaidAmount;
+                  final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+                  
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [cs.primary, cs.primary.withValues(alpha: 0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Doanh thu Tháng $_selectedMonth/2026',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            formatter.format(summary.totalRevenue),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.trending_up,
+                                color: Colors.greenAccent,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Dữ liệu đang được tổng hợp',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _RevenueStatBox(
+                                  label: 'Đã thu',
+                                  value: _formatShort(collected),
+                                  icon: Icons.check_circle_outline_rounded,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _RevenueStatBox(
+                                  label: 'Chưa thu',
+                                  value: _formatShort(summary.unpaidAmount),
+                                  icon: Icons.hourglass_empty_rounded,
+                                  color: Colors.orangeAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '78,500,000 đ',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.trending_up,
-                          color: Colors.greenAccent,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '↑ 5.2% so với T${_selectedMonth - 1} (74.6M)',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _RevenueStatBox(
-                            label: 'Đã thu',
-                            value: '66.2M',
-                            icon: Icons.check_circle_outline_rounded,
-                            color: Colors.greenAccent,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _RevenueStatBox(
-                            label: 'Chưa thu',
-                            value: '12.3M',
-                            icon: Icons.hourglass_empty_rounded,
-                            color: Colors.orangeAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                  );
+                }
+                
+                return const Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
             ),
           ),
 
@@ -250,28 +277,14 @@ class _LandlordFinanceScreenState extends State<LandlordFinanceScreen>
             ),
           ),
 
-          // ── Section Header ────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Danh sách hóa đơn',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () =>
-                        context.push('/landlord/finance/invoice-detail'),
-                    child: Text(
-                      'Xem tất cả →',
-                      style: TextStyle(color: cs.primary),
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Danh sách hóa đơn',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
