@@ -8,6 +8,8 @@ import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/property/presentation/cubit/property_cubit.dart';
 import 'features/room/presentation/cubit/room_cubit.dart';
 import 'features/ticket/presentation/bloc/ticket_cubit.dart';
+import 'features/statistics/presentation/cubit/finance_summary_cubit.dart';
+import 'features/meter_reading/presentation/cubit/meter_reading_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,12 @@ void main() async {
         ),
         BlocProvider(
           create: (_) => sl<TicketCubit>(),
+        ),
+        BlocProvider(
+          create: (_) => sl<FinanceSummaryCubit>()..loadFinanceSummary(),
+        ),
+        BlocProvider(
+          create: (_) => sl<MeterReadingCubit>()..loadProperties(),
         ),
       ],
       child: const SmartStayApp(),

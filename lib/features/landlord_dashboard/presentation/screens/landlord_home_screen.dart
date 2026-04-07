@@ -3,9 +3,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../property/presentation/cubit/property_cubit.dart';
+import '../../../property/presentation/cubit/property_state.dart';
+import '../../../statistics/presentation/cubit/finance_summary_cubit.dart';
+import '../../../statistics/presentation/cubit/finance_summary_state.dart';
 
 class LandlordHomeScreen extends StatelessWidget {
   const LandlordHomeScreen({super.key});
+
+  String _formatVnd(double value) {
+    if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1).replaceAll('.0', '')}M';
+    } else if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(0)}K';
+    }
+    return value.toStringAsFixed(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,17 +83,28 @@ class LandlordHomeScreen extends StatelessWidget {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        _AreaChip(label: 'Tất cả khu trọ', isSelected: true),
-                        const SizedBox(width: 12),
-                        _AreaChip(
-                          label: 'Khu A - Bình Thạnh',
-                          isSelected: false,
-                        ),
-                        const SizedBox(width: 12),
-                        _AreaChip(label: 'Khu B - Quận 7', isSelected: false),
-                      ],
+                    child: BlocBuilder<PropertyCubit, PropertyState>(
+                      builder: (context, propertyState) {
+                        final properties = propertyState.maybeWhen(
+                          loaded: (props, selected) => props,
+                          orElse: () => [],
+                        );
+                        
+                        return Row(
+                          children: [
+                            const _AreaChip(label: 'Tất cả khu trọ', isSelected: true),
+                            if (properties.isEmpty) ...[
+                              const SizedBox(width: 12),
+                              const _AreaChip(label: 'Khu A - Bình Thạnh', isSelected: false),
+                              const SizedBox(width: 12),
+                              const _AreaChip(label: 'Khu B - Quận 7', isSelected: false),
+                            ] else ...properties.map((p) => Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: _AreaChip(label: p.name, isSelected: false),
+                            )),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -88,84 +112,103 @@ class LandlordHomeScreen extends StatelessWidget {
                 // Stats Grid
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                  sliver: SliverGrid.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.15,
-                    children: [
-                      _StatCard(
-                        title: 'PHÒNG TRỐNG',
-                        icon: Icons.home_rounded,
-                        iconColor: Colors.orange,
-                        mainValue: '4',
-                        mainValueColor: Colors.orange,
-                        subValueWidget: const Text(
-                          ' / 30 phòng',
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ),
-                      _StatCard(
-                        title: 'ĐANG THUÊ',
-                        icon: Icons.check_circle_rounded,
-                        iconColor: colorScheme.primary,
-                        mainValue: '26',
-                        mainValueColor: colorScheme.primary,
-                        subValueWidget: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            'tỷ lệ lấp đầy 87%',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      _StatCard(
-                        title: 'DOANH THU T3',
-                        icon: Icons.payments_rounded,
-                        iconColor: colorScheme.primary,
-                        mainValue: '78.5M',
-                        mainValueColor: colorScheme.primary,
-                        subValueWidget: Row(
+                  sliver: BlocBuilder<FinanceSummaryCubit, FinanceSummaryState>(
+                    builder: (context, financeState) {
+                      if (financeState is FinanceSummaryLoaded) {
+                        final summary = financeState.summary;
+                        final occupiedPercent = summary.totalRooms > 0 
+                            ? (summary.occupiedRooms / summary.totalRooms * 100).toStringAsFixed(0) 
+                            : '0';
+                        return SliverGrid.count(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.15,
                           children: [
-                            Icon(
-                              Icons.trending_up_rounded,
-                              size: 14,
-                              color: colorScheme.primary,
+                            _StatCard(
+                              title: 'PHÒNG TRỐNG',
+                              icon: Icons.home_rounded,
+                              iconColor: Colors.orange,
+                              mainValue: summary.emptyRooms.toString(),
+                              mainValueColor: Colors.orange,
+                              subValueWidget: Text(
+                                ' / ${summary.totalRooms} phòng',
+                                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              '5% so với T2',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.black54,
+                            _StatCard(
+                              title: 'ĐANG THUÊ',
+                              icon: Icons.check_circle_rounded,
+                              iconColor: colorScheme.primary,
+                              mainValue: summary.occupiedRooms.toString(),
+                              mainValueColor: colorScheme.primary,
+                              subValueWidget: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'tỷ lệ lấp đầy $occupiedPercent%',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _StatCard(
+                              title: 'DOANH THU',
+                              icon: Icons.payments_rounded,
+                              iconColor: colorScheme.primary,
+                              mainValue: _formatVnd(summary.totalRevenue),
+                              mainValueColor: colorScheme.primary,
+                              subValueWidget: Row(
+                                children: [
+                                  Icon(
+                                    Icons.trending_up_rounded,
+                                    size: 14,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Dữ liệu T4',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _StatCard(
+                              title: 'CHƯA THU',
+                              icon: Icons.warning_rounded,
+                              iconColor: Colors.red,
+                              mainValue: _formatVnd(summary.unpaidAmount),
+                              mainValueColor: Colors.red,
+                              subValueWidget: const Text(
+                                'các hợp đồng',
+                                style: TextStyle(fontSize: 11, color: Colors.red),
                               ),
                             ),
                           ],
+                        );
+                      }
+                      
+                      return const SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
-                      ),
-                      _StatCard(
-                        title: 'CHƯA THU',
-                        icon: Icons.warning_rounded,
-                        iconColor: Colors.red,
-                        mainValue: '12.3M',
-                        mainValueColor: Colors.red,
-                        subValueWidget: const Text(
-                          '5 phòng quá hạn',
-                          style: TextStyle(fontSize: 11, color: Colors.red),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
 

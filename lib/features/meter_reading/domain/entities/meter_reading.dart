@@ -18,8 +18,8 @@ class MeterReading {
   final String id;
   final String roomId;
   final MeterType type;
-  final int oldUnit;
-  final int newUnit;
+  final double oldUnit;
+  final double newUnit;
   final int month;
   final int year;
   final String? photoUrl;
@@ -35,7 +35,7 @@ class MeterReading {
     this.photoUrl,
   });
 
-  int get consumed => newUnit - oldUnit;
+  double get consumed => newUnit - oldUnit;
 
   String get periodLabel => 'T$month/$year';
 }

@@ -1,5 +1,6 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../features/invoice/domain/entities/invoice.dart';
 
 // Auth
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -26,6 +27,7 @@ import '../../features/landlord_dashboard/presentation/screens/landlord_payment_
 import '../../features/landlord_dashboard/presentation/screens/landlord_rooms_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_room_detail_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_post_room_screen.dart';
+import '../../features/landlord_dashboard/presentation/screens/landlord_add_room_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_listings_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_create_contract_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_issues_screen.dart';
@@ -98,7 +100,10 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'invoice-detail',
-                  builder: (_, __) => const LandlordInvoiceDetailScreen(),
+                  builder: (_, state) {
+                    final invoice = state.extra as Invoice?;
+                    return LandlordInvoiceDetailScreen(invoice: invoice);
+                  },
                 ),
                 GoRoute(
                   path: 'settle',
@@ -132,6 +137,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'add',
                   builder: (_, __) => const LandlordPostRoomScreen(),
+                ),
+                GoRoute(
+                  path: 'add-room',
+                  builder: (_, __) => const LandlordAddRoomScreen(),
                 ),
                 GoRoute(
                   path: 'listings',
@@ -227,7 +236,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/landlord/add-board-post',
-      builder: (_, __) => const LandlordAddBoardPostScreen(),
+      builder: (_, state) {
+        final propertyId = state.extra as String? ?? '';
+        return LandlordAddBoardPostScreen(propertyId: propertyId);
+      },
     ),
 
     // ─── TENANT SHELL (5 TABS) ────────────────────────────────────────────────

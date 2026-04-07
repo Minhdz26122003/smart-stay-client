@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _rememberMe = true;
+  bool _isLoggingIn = false;
 
   @override
   void dispose() {
@@ -28,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _onLogin() {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoggingIn = true);
       context.read<AuthBloc>().add(
         AuthEvent.loginRequested(
           email: _phoneController.text.trim(),
@@ -47,15 +49,24 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         state.maybeWhen(
           authenticated: (user) {
+            if (_isLoggingIn) setState(() => _isLoggingIn = false);
             if (user.role == 'landlord') {
               context.go('/landlord');
             } else {
               context.go('/tenant');
             }
           },
-          failure: (message) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: cs.error),
-          ),
+          failure: (message) {
+            if (_isLoggingIn) {
+              setState(() => _isLoggingIn = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message), backgroundColor: cs.error),
+              );
+            }
+          },
+          unauthenticated: () {
+            if (_isLoggingIn) setState(() => _isLoggingIn = false);
+          },
           orElse: () {},
         );
       },
@@ -172,18 +183,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      final isLoading = state.maybeWhen(
-                        loading: () => true,
-                        orElse: () => false,
-                      );
-                      return _PrimaryButton(
-                        label: 'ĐĂNG NHẬP',
-                        isLoading: isLoading,
-                        onPressed: _onLogin,
-                      );
-                    },
+                  _PrimaryButton(
+                    label: 'ĐĂNG NHẬP',
+                    isLoading: _isLoggingIn,
+                    onPressed: _onLogin,
                   ),
                   const SizedBox(height: 28),
 

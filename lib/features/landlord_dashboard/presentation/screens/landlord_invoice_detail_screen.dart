@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import '../../../invoice/domain/entities/invoice.dart';
+
+String _formatVnd(double amount) {
+  final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+  return formatter.format(amount);
+}
 
 class LandlordInvoiceDetailScreen extends StatelessWidget {
-  const LandlordInvoiceDetailScreen({super.key});
+  final Invoice? invoice;
+  const LandlordInvoiceDetailScreen({super.key, this.invoice});
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +72,13 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
-                    'Hóa đơn tháng 4/2026',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  Text(
+                    invoice?.periodLabel ?? 'Hóa đơn dịch vụ',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Phòng 205 - Nguyễn Thị Linh',
+                    'Chi tiết thanh toán', // Assuming we don't have the roomName passing down yet here
                     style: TextStyle(
                       color: Color.from(alpha: 1, red: 1, green: 1, blue: 1),
                       fontSize: 16,
@@ -79,7 +88,7 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   // Total amount
                   Text(
-                    '4.705.000 đ',
+                    invoice != null ? _formatVnd(invoice!.totalAmount) : '4.705.000 đ',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -94,23 +103,23 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.2),
+                      color: invoice?.isPaid == true ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.orange.shade400),
+                      border: Border.all(color: invoice?.isPaid == true ? Colors.green.shade400 : Colors.orange.shade400),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.schedule_rounded,
-                          color: Colors.orange.shade300,
+                          invoice?.isPaid == true ? Icons.check_circle_rounded : Icons.schedule_rounded,
+                          color: invoice?.isPaid == true ? Colors.green.shade300 : Colors.orange.shade300,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Chưa thanh toán · Hạn 25/04',
+                          invoice?.status.displayName ?? 'Chưa thanh toán · Hạn 25/04',
                           style: TextStyle(
-                            color: Colors.orange.shade200,
+                            color: invoice?.isPaid == true ? Colors.green.shade200 : Colors.orange.shade200,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -212,39 +221,43 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                         _CostRow(
                           icon: Icons.home_outlined,
                           label: 'Tiền phòng',
-                          value: '4.250.000 đ',
+                          value: invoice?.breakdown != null ? _formatVnd(invoice!.breakdown!.rent) : '4.250.000 đ',
                           cs: cs,
                         ),
                         const SizedBox(height: 12),
                         _CostRow(
                           icon: Icons.electric_bolt_rounded,
-                          label: 'Điện (57 kWh × 3.500đ)',
-                          value: '199.500 đ',
+                          label: invoice?.breakdown != null ? 'Điện (${invoice!.breakdown!.electricityConsumed} kWh)' : 'Điện',
+                          value: invoice?.breakdown != null ? _formatVnd(invoice!.breakdown!.electricityAmount) : '199.500 đ',
                           cs: cs,
                           color: Colors.amber,
                         ),
                         const SizedBox(height: 12),
                         _CostRow(
                           icon: Icons.water_drop_rounded,
-                          label: 'Nước (4 m³ × 15.000đ)',
-                          value: '60.000 đ',
+                          label: invoice?.breakdown != null ? 'Nước (${invoice!.breakdown!.waterConsumed} khối)' : 'Nước',
+                          value: invoice?.breakdown != null ? _formatVnd(invoice!.breakdown!.waterAmount) : '60.000 đ',
                           cs: cs,
                           color: Colors.blue,
                         ),
-                        const SizedBox(height: 12),
-                        _CostRow(
-                          icon: Icons.wifi_rounded,
-                          label: 'Phí Wifi',
-                          value: '80.000 đ',
-                          cs: cs,
-                        ),
-                        const SizedBox(height: 12),
-                        _CostRow(
-                          icon: Icons.delete_outline_rounded,
-                          label: 'Phí rác',
-                          value: '20.000 đ',
-                          cs: cs,
-                        ),
+                        if (invoice?.breakdown != null && invoice!.breakdown!.internet > 0) ...[
+                          const SizedBox(height: 12),
+                          _CostRow(
+                            icon: Icons.wifi_rounded,
+                            label: 'Phí Wifi',
+                            value: _formatVnd(invoice!.breakdown!.internet),
+                            cs: cs,
+                          ),
+                        ],
+                        if (invoice?.breakdown != null && invoice!.breakdown!.garbage > 0) ...[
+                          const SizedBox(height: 12),
+                          _CostRow(
+                            icon: Icons.delete_outline_rounded,
+                            label: 'Phí rác',
+                            value: _formatVnd(invoice!.breakdown!.garbage),
+                            cs: cs,
+                          ),
+                        ],
                         const Divider(height: 24),
                         // Wavy total row
                         Container(
@@ -265,7 +278,7 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '4.609.500 đ',
+                                invoice != null ? _formatVnd(invoice!.totalAmount) : '4.609.500 đ',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -295,22 +308,22 @@ class LandlordInvoiceDetailScreen extends StatelessWidget {
                   _MetaRow(
                     icon: Icons.calendar_today_rounded,
                     label: 'Kỳ thanh toán',
-                    value: 'Tháng 4/2026',
+                    value: invoice?.periodLabel ?? '1',
                     cs: cs,
                   ),
                   const SizedBox(height: 12),
                   _MetaRow(
                     icon: Icons.event_available_rounded,
                     label: 'Hạn thanh toán',
-                    value: '25/04/2026',
+                    value: 'N/A', // TODO: invoice model does not have a dueDate field yet
                     cs: cs,
-                    isAlert: true,
+                    isAlert: invoice?.isPaid == false,
                   ),
                   const SizedBox(height: 12),
                   _MetaRow(
                     icon: Icons.access_time_rounded,
-                    label: 'Ngày tạo',
-                    value: '01/04/2026',
+                    label: 'Tháng',
+                    value: invoice != null ? '${invoice!.month}/${invoice!.year}' : '',
                     cs: cs,
                   ),
                 ],

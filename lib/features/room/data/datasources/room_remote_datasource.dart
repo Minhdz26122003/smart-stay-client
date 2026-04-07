@@ -32,6 +32,8 @@ class RoomRemoteDataSourceImpl implements RoomRemoteDataSource {
     try {
       final response = await _dio.get('/api/v1/rooms/$roomId');
       final data = response.data['data'] as Map<String, dynamic>;
+      // DEBUG: print raw room detail data
+      print('DEBUG ROOM DETAIL JSON: $data');
       return RoomDetailModel.fromJson(data);
     } on DioException catch (e) {
       throw AppException.fromDioError(e);

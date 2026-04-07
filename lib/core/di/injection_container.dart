@@ -17,12 +17,25 @@ import '../../features/ticket/data/datasources/ticket_remote_data_source.dart';
 import '../../features/ticket/data/repositories/ticket_repository_impl.dart';
 import '../../features/ticket/domain/repositories/ticket_repository.dart';
 import '../../features/ticket/presentation/bloc/ticket_cubit.dart';
+import '../../features/statistics/data/datasources/statistics_remote_datasource.dart';
+import '../../features/statistics/data/repositories/statistics_repository_impl.dart';
+import '../../features/statistics/domain/repositories/statistics_repository.dart';
+import '../../features/statistics/presentation/cubit/finance_summary_cubit.dart';
 import '../../features/invoice/data/datasources/invoice_remote_datasource.dart';
 import '../../features/invoice/data/repositories/invoice_repository_impl.dart';
 import '../../features/invoice/domain/repositories/invoice_repository.dart';
 import '../../features/meter_reading/data/datasources/meter_reading_remote_datasource.dart';
 import '../../features/meter_reading/data/repositories/meter_reading_repository_impl.dart';
 import '../../features/meter_reading/domain/repositories/meter_reading_repository.dart';
+import '../../features/meter_reading/presentation/cubit/meter_reading_cubit.dart';
+import '../../features/announcement/data/datasources/announcement_remote_datasource.dart';
+import '../../features/announcement/data/repositories/announcement_repository_impl.dart';
+import '../../features/announcement/domain/repositories/announcement_repository.dart';
+import '../../features/announcement/presentation/cubit/announcement_cubit.dart';
+import '../../features/contract/data/datasources/contract_remote_datasource.dart';
+import '../../features/contract/data/repositories/contract_repository_impl.dart';
+import '../../features/contract/domain/repositories/contract_repository.dart';
+import '../../features/contract/presentation/cubit/contract_cubit.dart';
 import '../../features/inventory/data/datasources/inventory_remote_datasource.dart';
 import '../../features/inventory/data/repositories/inventory_repository_impl.dart';
 import '../../features/inventory/domain/repositories/inventory_repository.dart';
@@ -44,6 +57,22 @@ Future<void> initDI() async {
       ticketRepository: sl(),
     ),
   );
+  sl.registerFactory(
+    () => FinanceSummaryCubit(repository: sl()),
+  );
+  sl.registerFactory(
+    () => MeterReadingCubit(
+      propertyRepository: sl(),
+      roomRepository: sl(),
+      meterReadingRepository: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => AnnouncementCubit(repository: sl()),
+  );
+  sl.registerFactory(
+    () => ContractCubit(repository: sl()),
+  );
 
   // ─── Repositories ─────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRepository>(
@@ -64,8 +93,19 @@ Future<void> initDI() async {
   sl.registerLazySingleton<MeterReadingRepository>(
     () => MeterReadingRepositoryImpl(dataSource: sl()),
   );
+  sl.registerLazySingleton<AnnouncementRepository>(
+    () => AnnouncementRepositoryImpl(dataSource: sl()),
+  );
+  sl.registerLazySingleton<ContractRepository>(
+    () => ContractRepositoryImpl(dataSource: sl()),
+  );
   sl.registerLazySingleton<InventoryRepository>(
     () => InventoryRepositoryImpl(dataSource: sl()),
+  );
+  sl.registerLazySingleton<StatisticsRepository>(
+    () => StatisticsRepositoryImpl(
+      remoteDataSource: sl(),
+    ),
   );
 
   // ─── Data Sources ─────────────────────────────────────────────────────────
@@ -89,6 +129,15 @@ Future<void> initDI() async {
   );
   sl.registerLazySingleton<InventoryRemoteDataSource>(
     () => InventoryRemoteDataSourceImpl(),
+  );
+  sl.registerLazySingleton<StatisticsRemoteDataSource>(
+    () => StatisticsRemoteDataSourceImpl(),
+  );
+  sl.registerLazySingleton<AnnouncementRemoteDataSource>(
+    () => AnnouncementRemoteDataSourceImpl(),
+  );
+  sl.registerLazySingleton<ContractRemoteDataSource>(
+    () => ContractRemoteDataSourceImpl(),
   );
 
   // Dummy reg to pass test

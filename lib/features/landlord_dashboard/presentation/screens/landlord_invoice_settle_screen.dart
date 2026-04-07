@@ -1,38 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-// ─── Data Models ─────────────────────────────────────────────────────────────
-class _RoomEntry {
-  final String room;
-  final String tenant;
-  final int base;
-  final int prevElectric;
-  int curElectric;
-  final int prevWater;
-  int curWater;
-  final int electricRate;
-  final int waterRate;
-  bool done;
-
-  _RoomEntry({
-    required this.room,
-    required this.tenant,
-    required this.base,
-    required this.prevElectric,
-    required this.curElectric,
-    required this.prevWater,
-    required this.curWater,
-    required this.electricRate,
-    required this.waterRate,
-    this.done = false,
-  });
-
-  int get electricUsed => curElectric - prevElectric;
-  int get waterUsed => curWater - prevWater;
-  int get electricCost => electricUsed * electricRate;
-  int get waterCost => waterUsed * waterRate;
-  int get total => base + electricCost + waterCost;
-}
+import '../../../../features/meter_reading/presentation/cubit/meter_reading_cubit.dart';
+import '../../../../features/meter_reading/presentation/cubit/meter_reading_state.dart';
+import '../../../../features/property/domain/entities/property.dart';
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 class LandlordInvoiceSettleScreen extends StatefulWidget {
@@ -46,92 +17,13 @@ class _LandlordInvoiceSettleScreenState
     extends State<LandlordInvoiceSettleScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
-  int _selectedAreaIndex = 0;
 
-  final _areas = ['Khu A · Bình Thạnh', 'Khu B · Gò Vấp'];
-
-  final _aRooms = [
-    _RoomEntry(
-      room: 'P.205',
-      tenant: 'Nguyễn Thị Linh',
-      base: 3500000,
-      prevElectric: 432,
-      curElectric: 0,
-      prevWater: 18,
-      curWater: 0,
-      electricRate: 3500,
-      waterRate: 15000,
-    ),
-    _RoomEntry(
-      room: 'P.101',
-      tenant: 'Nguyễn Văn A',
-      base: 3500000,
-      prevElectric: 541,
-      curElectric: 598,
-      prevWater: 23,
-      curWater: 27,
-      electricRate: 3500,
-      waterRate: 15000,
-      done: true,
-    ),
-    _RoomEntry(
-      room: 'P.201',
-      tenant: 'Trần Thanh Tâm',
-      base: 4200000,
-      prevElectric: 312,
-      curElectric: 385,
-      prevWater: 12,
-      curWater: 15,
-      electricRate: 3500,
-      waterRate: 15000,
-      done: true,
-    ),
-  ];
-
-  final _bRooms = [
-    _RoomEntry(
-      room: 'P.01',
-      tenant: 'Lê Thị Thu',
-      base: 2800000,
-      prevElectric: 210,
-      curElectric: 0,
-      prevWater: 8,
-      curWater: 0,
-      electricRate: 3500,
-      waterRate: 15000,
-    ),
-    _RoomEntry(
-      room: 'P.02',
-      tenant: 'Phạm Văn Nam',
-      base: 3200000,
-      prevElectric: 180,
-      curElectric: 0,
-      prevWater: 11,
-      curWater: 0,
-      electricRate: 3500,
-      waterRate: 15000,
-    ),
-  ];
-
-  List<_RoomEntry> get _currentRooms =>
-      _selectedAreaIndex == 0 ? _aRooms : _bRooms;
-
-  int get _total => [..._aRooms, ..._bRooms].fold(0, (s, r) => s + r.total);
-  int get _doneCount =>
-      _aRooms.where((r) => r.done).length + _bRooms.where((r) => r.done).length;
-  int get _pendingCount =>
-      _aRooms.where((r) => !r.done).length +
-      _bRooms.where((r) => !r.done).length;
-  int get _totalRooms => _aRooms.length + _bRooms.length;
-  int get _enteredCount =>
-      [..._aRooms, ..._bRooms].where((r) => r.done || r.curElectric > 0).length;
-
-  String _fmt(int n) {
-    final s = n.toString();
+  String _fmt(num n) {
+    var raw = n.toInt().toString();
     final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
+    for (var i = 0; i < raw.length; i++) {
+      if (i > 0 && (raw.length - i) % 3 == 0) buf.write('.');
+      buf.write(raw[i]);
     }
     return buf.toString();
   }
@@ -152,12 +44,6 @@ class _LandlordInvoiceSettleScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-
-    final pending = _currentRooms.where((r) => !r.done).toList();
-    final done = _currentRooms.where((r) => r.done).toList();
-
-    // Tab 0 = Chờ nhập, 1 = Đã nhập
-    final tabItems = [pending, done];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F4FF),
@@ -186,254 +72,294 @@ class _LandlordInvoiceSettleScreenState
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // ── Area Selector + Progress ────────────────────────────────────
-          Container(
-            color: cs.primary,
-            child: Column(
+      body: BlocBuilder<MeterReadingCubit, MeterReadingState>(
+        builder: (context, state) {
+          if (state is MeterReadingLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state is MeterReadingError) {
+            return Center(child: Text('Lỗi: ${state.message}'));
+          }
+
+          if (state is MeterReadingLoaded) {
+            final pending = state.entries.where((r) => !r.isDone).toList();
+            final done = state.entries.where((r) => r.isDone).toList();
+
+            final int _total = state.entries.fold(0, (s, r) => s + r.total.toInt());
+            final int _doneCount = done.length;
+            final int _pendingCount = pending.length;
+            final int _totalRooms = state.entries.length;
+            final int _enteredCount =
+                state.entries.where((r) => r.isDone || r.curElectric > 0).length;
+
+            final tabItems = [pending, done];
+
+            return Column(
               children: [
-                // Area chips
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                  child: Row(
-                    children: List.generate(_areas.length, (i) {
-                      final sel = i == _selectedAreaIndex;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedAreaIndex = i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
+                // ── Area Selector + Progress ────────────────────────────────────
+                Container(
+                  color: cs.primary,
+                  child: Column(
+                    children: [
+                      // Area chips
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: state.properties.map((Property p) {
+                              final sel = state.selectedProperty?.id == p.id;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: GestureDetector(
+                                  onTap: () => context
+                                      .read<MeterReadingCubit>()
+                                      .selectProperty(p.id),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: sel
+                                          ? Colors.white
+                                          : Colors.white.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      p.name,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: sel ? cs.primary : Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      // Progress card
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Đã nhập: $_enteredCount/$_totalRooms phòng',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: cs.onSurface.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                                Text(
+                                  '${_totalRooms == 0 ? 0 : (_enteredCount / _totalRooms * 100).round()}%',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: cs.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            decoration: BoxDecoration(
-                              color: sel
-                                  ? Colors.white
-                                  : Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _areas[i],
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: sel ? cs.primary : Colors.white70,
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: _totalRooms == 0
+                                    ? 0.0
+                                    : _enteredCount / _totalRooms,
+                                minHeight: 8,
+                                backgroundColor:
+                                    cs.primary.withValues(alpha: 0.1),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(cs.primary),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-                // Progress card
-                Container(
-                  margin: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Đã nhập: $_enteredCount/$_totalRooms phòng',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: cs.onSurface.withValues(alpha: 0.7),
+                            const SizedBox(height: 12),
+                            // Stats row
+                            Row(
+                              children: [
+                                _StatBadge(
+                                  label: 'HOÀN THÀNH',
+                                  value: _doneCount,
+                                  color: const Color(0xFF00B894),
+                                  icon: Icons.check_circle_rounded,
+                                ),
+                                const SizedBox(width: 8),
+                                _StatBadge(
+                                  label: 'CHỜ NHẬP',
+                                  value: _pendingCount,
+                                  color: const Color(0xFFE17055),
+                                  icon: Icons.pending_rounded,
+                                ),
+                                const SizedBox(width: 8),
+                                _StatBadge(
+                                  label: 'TỔNG',
+                                  value: null,
+                                  rawText:
+                                      '${_fmt(_total / 1000000 > 1 ? (_total ~/ 100000) : _total)}${_total >= 1000000 ? "M" : "đ"}',
+                                  color: cs.primary,
+                                  icon: Icons.account_balance_wallet_rounded,
+                                ),
+                              ],
                             ),
-                          ),
-                          Text(
-                            '${(_enteredCount / _totalRooms * 100).round()}%',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: cs.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: _enteredCount / _totalRooms,
-                          minHeight: 8,
-                          backgroundColor: cs.primary.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Stats row
-                      Row(
-                        children: [
-                          _StatBadge(
-                            label: 'HOÀN THÀNH',
-                            value: _doneCount,
-                            color: const Color(0xFF00B894),
-                            icon: Icons.check_circle_rounded,
-                          ),
-                          const SizedBox(width: 8),
-                          _StatBadge(
-                            label: 'CHỜ NHẬP',
-                            value: _pendingCount,
-                            color: const Color(0xFFE17055),
-                            icon: Icons.pending_rounded,
-                          ),
-                          const SizedBox(width: 8),
-                          _StatBadge(
-                            label: 'TỔNG',
-                            value: null,
-                            rawText:
-                                '${_fmt(_total / 1000000 > 1 ? (_total ~/ 100000) : _total)}${_total >= 1000000 ? "M" : "đ"}',
-                            color: cs.primary,
-                            icon: Icons.account_balance_wallet_rounded,
-                          ),
-                        ],
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
 
-          // ── Tab Bar ─────────────────────────────────────────────────────
-          Container(
-            color: Colors.white,
-            margin: const EdgeInsets.symmetric(horizontal: 12),
-            child: TabBar(
-              controller: _tabCtrl,
-              labelColor: cs.primary,
-              unselectedLabelColor: cs.onSurface.withValues(alpha: 0.45),
-              indicatorColor: cs.primary,
-              indicatorWeight: 3,
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-              tabs: [
-                Tab(text: 'Chờ nhập (${pending.length})'),
-                Tab(text: 'Đã nhập (${done.length})'),
-              ],
-            ),
-          ),
-
-          // ── Room Cards ───────────────────────────────────────────────────
-          Expanded(
-            child: TabBarView(
-              controller: _tabCtrl,
-              children: tabItems.map((list) {
-                if (list.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 56,
-                          color: const Color(0xFF00B894).withValues(alpha: 0.4),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Không có phòng nào',
-                          style: TextStyle(
-                            color: cs.onSurface.withValues(alpha: 0.4),
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
+                // ── Tab Bar ─────────────────────────────────────────────────────
+                Container(
+                  color: Colors.white,
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  child: TabBar(
+                    controller: _tabCtrl,
+                    labelColor: cs.primary,
+                    unselectedLabelColor: cs.onSurface.withValues(alpha: 0.45),
+                    indicatorColor: cs.primary,
+                    indicatorWeight: 3,
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _RoomInputCard(
-                    room: list[i],
-                    fmt: _fmt,
-                    cs: cs,
-                    theme: theme,
-                    onSave: () => setState(() {
-                      list[i].done = true;
-                    }),
-                    onScan: (type) => context.push(
-                      '/landlord/meter-scan',
-                      extra: {'room': list[i].room, 'type': type},
-                    ),
+                    tabs: [
+                      Tab(text: 'Chờ nhập (${pending.length})'),
+                      Tab(text: 'Đã nhập (${done.length})'),
+                    ],
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
+                ),
+
+                // ── Room Cards ───────────────────────────────────────────────────
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: tabItems.map((list) {
+                      if (list.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 56,
+                                color: const Color(0xFF00B894)
+                                    .withValues(alpha: 0.4),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Không có phòng nào',
+                                style: TextStyle(
+                                  color: cs.onSurface.withValues(alpha: 0.4),
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (_, i) => _RoomInputCard(
+                          entry: list[i],
+                          fmt: _fmt,
+                          cs: cs,
+                          theme: theme,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
 
       // ── Bottom CTA ─────────────────────────────────────────────────────
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: ElevatedButton.icon(
-            onPressed: _doneCount > 0
-                ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Đã gửi $_doneCount hóa đơn thành công! 🎉',
-                        ),
-                        backgroundColor: cs.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                    context.pop();
-                  }
-                : null,
-            icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-            label: Text(
-              _doneCount > 0
-                  ? '▶  Xác nhận & Gửi $_doneCount Hóa Đơn'
-                  : 'Chưa có hóa đơn nào',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+      bottomNavigationBar: BlocBuilder<MeterReadingCubit, MeterReadingState>(
+        builder: (context, state) {
+          if (state is MeterReadingLoaded) {
+            final int _doneCount =
+                state.entries.where((r) => r.isDone).length;
+            return Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              decoration: BoxDecoration(
                 color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: cs.primary,
-              minimumSize: const Size(double.infinity, 54),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+              child: SafeArea(
+                top: false,
+                child: ElevatedButton.icon(
+                  onPressed: _doneCount > 0
+                      ? () {
+                          context.read<MeterReadingCubit>().submitBatch();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Đang xử lý ${_doneCount} hóa đơn! 🎉',
+                              ),
+                              backgroundColor: cs.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                          // Maybe context.pop() or just wait
+                        }
+                      : null,
+                  icon: const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 20),
+                  label: Text(
+                    _doneCount > 0
+                        ? '▶  Xác nhận & Gửi $_doneCount Hóa Đơn'
+                        : 'Chưa có hóa đơn nào',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    minimumSize: const Size(double.infinity, 54),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
@@ -441,20 +367,16 @@ class _LandlordInvoiceSettleScreenState
 
 // ─── Room Input Card ──────────────────────────────────────────────────────────
 class _RoomInputCard extends StatefulWidget {
-  final _RoomEntry room;
-  final String Function(int) fmt;
+  final RoomMeterEntry entry;
+  final String Function(num) fmt;
   final ColorScheme cs;
   final ThemeData theme;
-  final VoidCallback onSave;
-  final void Function(String type) onScan;
 
   const _RoomInputCard({
-    required this.room,
+    required this.entry,
     required this.fmt,
     required this.cs,
     required this.theme,
-    required this.onSave,
-    required this.onScan,
   });
 
   @override
@@ -469,13 +391,28 @@ class _RoomInputCardState extends State<_RoomInputCard> {
   void initState() {
     super.initState();
     _elCtrl = TextEditingController(
-      text: widget.room.curElectric > 0
-          ? widget.room.curElectric.toString()
+      text: widget.entry.curElectric > 0
+          ? widget.entry.curElectric.toInt().toString()
           : '',
     );
     _waCtrl = TextEditingController(
-      text: widget.room.curWater > 0 ? widget.room.curWater.toString() : '',
+      text: widget.entry.curWater > 0
+          ? widget.entry.curWater.toInt().toString()
+          : '',
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant _RoomInputCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.entry.curElectric != oldWidget.entry.curElectric &&
+        widget.entry.curElectric > 0) {
+      _elCtrl.text = widget.entry.curElectric.toInt().toString();
+    }
+    if (widget.entry.curWater != oldWidget.entry.curWater &&
+        widget.entry.curWater > 0) {
+      _waCtrl.text = widget.entry.curWater.toInt().toString();
+    }
   }
 
   @override
@@ -487,7 +424,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
 
   @override
   Widget build(BuildContext context) {
-    final r = widget.room;
+    final r = widget.entry;
     final fmt = widget.fmt;
     final cs = widget.cs;
     final theme = widget.theme;
@@ -499,7 +436,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: r.done
+        border: r.isDone
             ? Border.all(
                 color: const Color(0xFF00B894).withValues(alpha: 0.3),
                 width: 1.5,
@@ -526,7 +463,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${r.room} · ${r.tenant}',
+                        '${r.roomName} · ${r.tenant}',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -534,7 +471,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                     ],
                   ),
                 ),
-                if (r.done)
+                if (r.isDone)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -586,7 +523,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
             ),
           ),
 
-          if (!r.done) ...[
+          if (!r.isDone) ...[
             const Divider(height: 1),
             // ── Meter Input ───────────────────────────────────────────
             Padding(
@@ -601,10 +538,16 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                     unit: 'kWh',
                     controller: _elCtrl,
                     onChanged: (v) {
-                      final n = int.tryParse(v) ?? 0;
-                      setState(() => r.curElectric = n);
+                      final n = double.tryParse(v) ?? 0;
+                      context.read<MeterReadingCubit>().updateMeterValue(
+                            r.roomId,
+                            elValue: n,
+                          );
                     },
-                    onScan: () => widget.onScan('electric'),
+                    onScan: () => context.push(
+                      '/landlord/meter-scan',
+                      extra: {'room': r.roomId, 'type': 'electric'},
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _MeterInput(
@@ -615,10 +558,16 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                     unit: 'm³',
                     controller: _waCtrl,
                     onChanged: (v) {
-                      final n = int.tryParse(v) ?? 0;
-                      setState(() => r.curWater = n);
+                      final n = double.tryParse(v) ?? 0;
+                      context.read<MeterReadingCubit>().updateMeterValue(
+                            r.roomId,
+                            waValue: n,
+                          );
                     },
-                    onScan: () => widget.onScan('water'),
+                    onScan: () => context.push(
+                      '/landlord/meter-scan',
+                      extra: {'room': r.roomId, 'type': 'water'},
+                    ),
                   ),
                 ],
               ),
@@ -629,7 +578,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
               child: Row(
                 children: [
                   Text(
-                    'Tiền phòng: ${fmt(r.base)} đ',
+                    'Tiền phòng: ${fmt(r.basePrice)} đ',
                     style: TextStyle(
                       fontSize: 12,
                       color: cs.onSurface.withValues(alpha: 0.5),
@@ -638,10 +587,16 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                   const Spacer(),
                   ElevatedButton.icon(
                     onPressed:
-                        r.curElectric > r.prevElectric ||
-                            r.curWater > r.prevWater
-                        ? widget.onSave
-                        : null,
+                        r.curElectric >= r.prevElectric &&
+                                r.curWater >= r.prevWater &&
+                                (r.curElectric > r.prevElectric ||
+                                 r.curWater > r.prevWater)
+                            ? () {
+                                context
+                                    .read<MeterReadingCubit>()
+                                    .markRoomDoneLocally(r.roomId);
+                              }
+                            : null,
                     icon: const Icon(
                       Icons.save_rounded,
                       size: 16,
@@ -691,7 +646,7 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '+ ${fmt(r.base)}đ tiền phòng',
+                        '+ ${fmt(r.basePrice)}đ tiền phòng',
                         style: TextStyle(
                           fontSize: 12,
                           color: cs.onSurface.withValues(alpha: 0.5),
@@ -735,7 +690,7 @@ class _MeterInput extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String label;
-  final int prev;
+  final num prev;
   final String unit;
   final TextEditingController controller;
   final ValueChanged<String> onChanged;

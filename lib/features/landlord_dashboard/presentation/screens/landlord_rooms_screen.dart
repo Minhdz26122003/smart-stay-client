@@ -272,7 +272,7 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/landlord/add'),
+        onPressed: () => context.push('/landlord/operations/add-room'),
         extendedPadding: const EdgeInsets.symmetric(horizontal: 10),
         backgroundColor: cs.primary,
         icon: const Icon(Icons.add, color: Colors.white),

@@ -5,8 +5,8 @@ class MeterReadingModel {
   final String id;
   final String roomId;
   final String type;
-  final int oldUnit;
-  final int newUnit;
+  final double oldUnit;
+  final double newUnit;
   final int month;
   final int year;
   final String? photoUrl;
@@ -27,8 +27,8 @@ class MeterReadingModel {
       id: json['id'] as String? ?? '',
       roomId: json['roomId'] as String? ?? '',
       type: json['type'] as String? ?? 'Electricity',
-      oldUnit: (json['oldUnit'] as num?)?.toInt() ?? 0,
-      newUnit: (json['newUnit'] as num?)?.toInt() ?? 0,
+      oldUnit: (json['oldUnit'] as num?)?.toDouble() ?? 0.0,
+      newUnit: (json['newUnit'] as num?)?.toDouble() ?? 0.0,
       month: (json['month'] as num?)?.toInt() ?? 1,
       year: (json['year'] as num?)?.toInt() ?? 2025,
       photoUrl: json['photoUrl'] as String?,
