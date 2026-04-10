@@ -39,6 +39,10 @@ import '../../features/contract/presentation/cubit/contract_cubit.dart';
 import '../../features/inventory/data/datasources/inventory_remote_datasource.dart';
 import '../../features/inventory/data/repositories/inventory_repository_impl.dart';
 import '../../features/inventory/domain/repositories/inventory_repository.dart';
+import '../../features/listing/data/datasources/listing_remote_datasource.dart';
+import '../../features/listing/data/repositories/listing_repository_impl.dart';
+import '../../features/listing/domain/repositories/listing_repository.dart';
+import '../../features/listing/presentation/cubit/listing_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -73,6 +77,9 @@ Future<void> initDI() async {
   sl.registerFactory(
     () => ContractCubit(repository: sl()),
   );
+  sl.registerFactory(
+    () => ListingCubit(repository: sl()),
+  );
 
   // ─── Repositories ─────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRepository>(
@@ -101,6 +108,9 @@ Future<void> initDI() async {
   );
   sl.registerLazySingleton<InventoryRepository>(
     () => InventoryRepositoryImpl(dataSource: sl()),
+  );
+  sl.registerLazySingleton<ListingRepository>(
+    () => ListingRepositoryImpl(remoteDataSource: sl()),
   );
   sl.registerLazySingleton<StatisticsRepository>(
     () => StatisticsRepositoryImpl(
@@ -138,6 +148,9 @@ Future<void> initDI() async {
   );
   sl.registerLazySingleton<ContractRemoteDataSource>(
     () => ContractRemoteDataSourceImpl(),
+  );
+  sl.registerLazySingleton<ListingRemoteDataSource>(
+    () => ListingRemoteDataSourceImpl(),
   );
 
   // Dummy reg to pass test

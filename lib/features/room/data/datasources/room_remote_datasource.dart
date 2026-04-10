@@ -9,6 +9,18 @@ import '../models/room_detail_model.dart';
 abstract class RoomRemoteDataSource {
   Future<List<RoomModel>> getRoomsByProperty(String propertyId);
   Future<RoomDetailModel> getRoomDetail(String roomId);
+  Future<RoomModel> createRoom({
+    required String propertyId,
+    required String name,
+    required int floor,
+    required double area,
+    required int maxOccupancy,
+    required double basePrice,
+    required String description,
+    required String type,
+    required List<String> facilities,
+    List<String>? photoUrls,
+  });
 }
 
 class RoomRemoteDataSourceImpl implements RoomRemoteDataSource {
@@ -35,6 +47,42 @@ class RoomRemoteDataSourceImpl implements RoomRemoteDataSource {
       // DEBUG: print raw room detail data
       print('DEBUG ROOM DETAIL JSON: $data');
       return RoomDetailModel.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<RoomModel> createRoom({
+    required String propertyId,
+    required String name,
+    required int floor,
+    required double area,
+    required int maxOccupancy,
+    required double basePrice,
+    required String description,
+    required String type,
+    required List<String> facilities,
+    List<String>? photoUrls,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/api/v1/rooms',
+        data: {
+          'propertyId': propertyId,
+          'name': name,
+          'floor': floor,
+          'area': area,
+          'maxOccupancy': maxOccupancy,
+          'basePrice': basePrice,
+          'description': description,
+          'type': type,
+          'facilities': facilities,
+          if (photoUrls != null) 'photoUrls': photoUrls,
+        },
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      return RoomModel.fromJson(data);
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     }

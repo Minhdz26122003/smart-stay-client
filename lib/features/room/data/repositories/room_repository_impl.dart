@@ -22,4 +22,32 @@ class RoomRepositoryImpl implements RoomRepository {
     final model = await _remoteDataSource.getRoomDetail(roomId);
     return model.toEntity();
   }
+
+  @override
+  Future<Room> createRoom({
+    required String propertyId,
+    required String name,
+    required int floor,
+    required double area,
+    required int maxOccupancy,
+    required double basePrice,
+    required String description,
+    required String type,
+    required List<String> facilities,
+    List<String>? photoUrls,
+  }) async {
+    final model = await _remoteDataSource.createRoom(
+      propertyId: propertyId,
+      name: name,
+      floor: floor,
+      area: area,
+      maxOccupancy: maxOccupancy,
+      basePrice: basePrice,
+      description: description,
+      type: type,
+      facilities: facilities,
+      photoUrls: photoUrls,
+    );
+    return model.toEntity();
+  }
 }

@@ -43,10 +43,10 @@ class TicketRemoteDataSourceImpl implements TicketRemoteDataSource {
 
   @override
   Future<void> updateTicketStatus(String id, TicketStatus newStatus) async {
-    // Enum sang chữ hoa ví dụ như Resolved -> Resolved (đã config JsonValue)
-    final apiStatus = newStatus == TicketStatus.open ? "Open" 
-        : newStatus == TicketStatus.inProgress ? "InProgress" 
-      : "Resolved";
+    // Enum values are 0: open, 1: inProgress, 2: resolved, 3: closed
+    int apiStatus = newStatus == TicketStatus.open ? 0 
+        : newStatus == TicketStatus.inProgress ? 1 
+      : 2;
     try {
       await _dio.put(
         '/api/v1/tickets/$id/status',

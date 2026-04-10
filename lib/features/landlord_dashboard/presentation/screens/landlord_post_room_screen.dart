@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../property/presentation/cubit/property_state.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../property/presentation/cubit/property_cubit.dart';
+import '../../../listing/presentation/cubit/listing_cubit.dart';
+import '../../../room/domain/entities/room.dart';
 
 class LandlordPostRoomScreen extends StatefulWidget {
-  const LandlordPostRoomScreen({super.key});
+  final Room? room;
+  const LandlordPostRoomScreen({super.key, this.room});
   @override
   State<LandlordPostRoomScreen> createState() => _LandlordPostRoomScreenState();
 }
@@ -475,19 +481,49 @@ class _LandlordPostRoomScreenState extends State<LandlordPostRoomScreen> {
 
               // Submit
               ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Đã đăng tin thành công! 🎉'),
-                        backgroundColor: cs.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    final propState = context.read<PropertyCubit>().state;
+                    String? propId;
+                    propState.maybeWhen(
+                      loaded: (_, selected) => propId = selected?.id,
+                      orElse: () {},
                     );
-                    context.pop();
+
+                    if (propId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Lỗi: Chưa chọn nhà trọ'),
+                          backgroundColor: cs.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    await context.read<ListingCubit>().createListing(
+                      propertyId: propId!,
+                      roomId: widget.room?.id,
+                      title: _titleCtrl.text,
+                      description: _descCtrl.text,
+                      price: double.tryParse(_rentCtrl.text) ?? 0.0,
+                      area: double.tryParse(_areaCtrl.text) ?? 20.0,
+                      facilities: _amenities.toList(),
+                      photoUrls: [],
+                    );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Đã đăng tin thành công! 🎉'),
+                          backgroundColor: cs.primary,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                      context.pop();
+                    }
                   }
                 },
                 icon: const Icon(

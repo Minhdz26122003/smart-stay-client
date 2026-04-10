@@ -545,8 +545,8 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                           );
                     },
                     onScan: () => context.push(
-                      '/landlord/meter-scan',
-                      extra: {'room': r.roomId, 'type': 'electric'},
+                      '/landlord/operations/meter-scan',
+                      extra: {'room': r.roomId, 'roomName': r.roomName, 'type': 'electric'},
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -565,8 +565,8 @@ class _RoomInputCardState extends State<_RoomInputCard> {
                           );
                     },
                     onScan: () => context.push(
-                      '/landlord/meter-scan',
-                      extra: {'room': r.roomId, 'type': 'water'},
+                      '/landlord/operations/meter-scan',
+                      extra: {'room': r.roomId, 'roomName': r.roomName, 'type': 'water'},
                     ),
                   ),
                 ],

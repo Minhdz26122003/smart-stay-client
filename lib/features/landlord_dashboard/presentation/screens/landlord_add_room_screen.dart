@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../property/presentation/cubit/property_state.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../property/presentation/cubit/property_cubit.dart';
+import '../../../room/presentation/cubit/room_cubit.dart';
 
 class LandlordAddRoomScreen extends StatefulWidget {
   const LandlordAddRoomScreen({super.key});
@@ -58,7 +62,9 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                   children: [
                     Text(
                       'Loại phòng',
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -76,7 +82,9 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                           selectedColor: cs.primary,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : cs.onSurface,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         );
                       }).toList(),
@@ -86,7 +94,8 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
                       label: 'Tên phòng *',
                       hint: 'Ví dụ: P.101',
                       controller: _nameCtrl,
-                      validator: (v) => v!.isEmpty ? 'Vui lòng nhập tên phòng' : null,
+                      validator: (v) =>
+                          v!.isEmpty ? 'Vui lòng nhập tên phòng' : null,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -122,26 +131,61 @@ class _LandlordAddRoomScreenState extends State<LandlordAddRoomScreen> {
               ),
               const SizedBox(height: 30),
               ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    // TODO: Call API POST /api/v1/rooms via Cubit
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Đã tạo phòng thành công!'),
-                        backgroundColor: cs.primary,
-                      ),
+                    final propState = context.read<PropertyCubit>().state;
+                    String? propId;
+                    propState.maybeWhen(
+                      loaded: (_, selected) => propId = selected?.id,
+                      orElse: () {},
                     );
-                    context.pop();
+
+                    if (propId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Lỗi: Chưa chọn nhà trọ'),
+                          backgroundColor: cs.error,
+                        ),
+                      );
+                      return;
+                    }
+
+                    await context.read<RoomCubit>().createRoom(
+                      propertyId: propId!,
+                      name: _nameCtrl.text,
+                      floor: 1, // Defaulting floor
+                      area: double.tryParse(_areaCtrl.text) ?? 20.0,
+                      maxOccupancy: int.tryParse(_occupantsCtrl.text) ?? 2,
+                      basePrice: double.tryParse(_priceCtrl.text) ?? 0.0,
+                      description: 'Phòng $_roomType',
+                      type: _roomType,
+                      facilities: [],
+                    );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Đã tạo phòng thành công!'),
+                          backgroundColor: cs.primary,
+                        ),
+                      );
+                      context.pop();
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: cs.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 icon: const Icon(Icons.add_home_work_rounded),
-                label: const Text('Thêm mới', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                label: const Text(
+                  'Thêm mới',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
               ),
             ],
           ),

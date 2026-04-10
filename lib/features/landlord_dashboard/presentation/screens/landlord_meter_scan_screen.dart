@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import '../../../meter_reading/presentation/cubit/meter_reading_cubit.dart';
 class LandlordMeterScanScreen extends StatefulWidget {
+  final String roomId;
   final String roomName;
   final String meterType; // 'electric' | 'water'
+  
   const LandlordMeterScanScreen({
     super.key,
-    this.roomName = 'Phòng 101',
-    this.meterType = 'electric',
+    required this.roomId,
+    required this.roomName,
+    required this.meterType,
   });
   @override
   State<LandlordMeterScanScreen> createState() =>
@@ -339,10 +343,19 @@ class _LandlordMeterScanScreenState extends State<LandlordMeterScanScreen>
                                 flex: 2,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
+                                    final valStr = _isManualEdit ? _editCtrl.text : _reading;
+                                    final valDouble = double.tryParse(valStr) ?? 0;
+                                    
+                                    context.read<MeterReadingCubit>().updateMeterValue(
+                                      widget.roomId,
+                                      elValue: _isElectric ? valDouble : null,
+                                      waValue: !_isElectric ? valDouble : null,
+                                    );
+                                    
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Đã lưu chỉ số $_reading ${_isElectric ? "kWh" : "m³"}',
+                                          'Đã lưu chỉ số $valStr ${_isElectric ? "kWh" : "m³"}',
                                         ),
                                         backgroundColor: cs.primary,
                                         behavior: SnackBarBehavior.floating,

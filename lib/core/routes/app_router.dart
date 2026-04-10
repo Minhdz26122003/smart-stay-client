@@ -39,6 +39,7 @@ import '../../features/landlord_dashboard/presentation/screens/landlord_messages
 import '../../features/landlord_dashboard/presentation/screens/landlord_chat_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_meter_scan_screen.dart';
 import '../../features/ticket/domain/entities/ticket.dart';
+import '../../features/room/domain/entities/room.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_create_contract_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_board_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_add_board_post_screen.dart';
@@ -165,6 +166,18 @@ final appRouter = GoRouter(
                   },
                 ),
                 GoRoute(
+                  path: 'meter-scan',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  builder: (context, state) {
+                    final extra = state.extra as Map<String, dynamic>? ?? {};
+                    return LandlordMeterScanScreen(
+                      roomId: extra['room'] ?? '',
+                      roomName: extra['roomName'] ?? 'Phòng',
+                      meterType: extra['type'] ?? 'electric',
+                    );
+                  },
+                ),
+                GoRoute(
                   path: 'checkout',
                   builder: (_, __) => const LandlordCheckoutScreen(),
                 ),
@@ -220,11 +233,21 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/landlord/add',
-      builder: (_, __) => const LandlordPostRoomScreen(),
+      builder: (context, state) {
+        final room = state.extra as Room?;
+        return LandlordPostRoomScreen(room: room);
+      },
     ),
     GoRoute(
       path: '/landlord/meter-scan',
-      builder: (_, __) => const LandlordMeterScanScreen(),
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return LandlordMeterScanScreen(
+          roomId: extra['room'] ?? '',
+          roomName: extra['roomName'] ?? 'Phòng',
+          meterType: extra['type'] ?? 'electric',
+        );
+      },
     ),
     GoRoute(
       path: '/landlord/create-contract',

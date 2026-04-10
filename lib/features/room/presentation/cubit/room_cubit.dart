@@ -22,4 +22,39 @@ class RoomCubit extends Cubit<RoomState> {
       emit(RoomState.error(e.toString()));
     }
   }
+
+  Future<void> createRoom({
+    required String propertyId,
+    required String name,
+    required int floor,
+    required double area,
+    required int maxOccupancy,
+    required double basePrice,
+    required String description,
+    required String type,
+    required List<String> facilities,
+    List<String>? photoUrls,
+  }) async {
+    emit(const RoomState.loading());
+    try {
+      await _repository.createRoom(
+        propertyId: propertyId,
+        name: name,
+        floor: floor,
+        area: area,
+        maxOccupancy: maxOccupancy,
+        basePrice: basePrice,
+        description: description,
+        type: type,
+        facilities: facilities,
+        photoUrls: photoUrls,
+      );
+      // Reload room list after success
+      await loadRooms(propertyId);
+    } on AppException catch (e) {
+      emit(RoomState.error(e.message));
+    } catch (e) {
+      emit(RoomState.error(e.toString()));
+    }
+  }
 }
