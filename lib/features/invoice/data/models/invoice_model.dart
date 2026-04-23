@@ -10,7 +10,7 @@ class InvoiceModel {
   final int year;
   final double totalAmount;
   final double paidAmount;
-  final int status;
+  final String status;
   final Map<String, dynamic>? breakdownJson;
   final DateTime createdAt;
 
@@ -39,14 +39,14 @@ class InvoiceModel {
     }
 
     return InvoiceModel(
-      id: json['id'] as String? ?? '',
-      roomId: json['roomId'] as String? ?? '',
-      contractId: json['contractId'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      roomId: json['roomId']?.toString() ?? '',
+      contractId: json['contractId']?.toString() ?? '',
       month: (json['month'] as num?)?.toInt() ?? 1,
       year: (json['year'] as num?)?.toInt() ?? 2025,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
       paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0,
-      status: (json['status'] as num?)?.toInt() ?? 0,
+      status: json['status']?.toString() ?? 'Pending',
       breakdownJson: bd,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -63,7 +63,7 @@ class InvoiceModel {
       year: year,
       totalAmount: totalAmount,
       paidAmount: paidAmount,
-      status: InvoiceStatus.fromInt(status),
+      status: InvoiceStatus.fromString(status),
       breakdown: _parseBreakdown(),
       createdAt: createdAt,
     );

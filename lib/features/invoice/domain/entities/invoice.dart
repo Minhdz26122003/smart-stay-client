@@ -1,17 +1,23 @@
 // lib/features/invoice/domain/entities/invoice.dart
 
 enum InvoiceStatus {
-  unpaid(0),
-  paid(1),
-  partialPaid(2),
-  overdue(3);
+  unpaid('Pending'),
+  paid('Paid'),
+  partiallyPaid('PartiallyPaid'),
+  overdue('Overdue');
 
-  final int value;
+  final String value;
   const InvoiceStatus(this.value);
 
-  factory InvoiceStatus.fromInt(int v) =>
-      InvoiceStatus.values.firstWhere((e) => e.value == v,
-          orElse: () => InvoiceStatus.unpaid);
+  factory InvoiceStatus.fromString(String v) {
+    if (v == '0') return InvoiceStatus.unpaid;
+    if (v == '1') return InvoiceStatus.paid;
+
+    return InvoiceStatus.values.firstWhere(
+      (e) => e.value.toLowerCase() == v.toLowerCase(),
+      orElse: () => InvoiceStatus.unpaid,
+    );
+  }
 
   String get displayName {
     switch (this) {
@@ -19,7 +25,7 @@ enum InvoiceStatus {
         return 'Chưa thanh toán';
       case InvoiceStatus.paid:
         return 'Đã thanh toán';
-      case InvoiceStatus.partialPaid:
+      case InvoiceStatus.partiallyPaid:
         return 'Thanh toán một phần';
       case InvoiceStatus.overdue:
         return 'Quá hạn';

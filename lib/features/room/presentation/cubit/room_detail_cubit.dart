@@ -41,7 +41,7 @@ class RoomDetailCubit extends Cubit<RoomDetailState> {
 
       // Step 2: Load remaining data in parallel
       final results = await Future.wait<List<dynamic>>([
-        contractId != null
+        (contractId != null && roomDetail.invoices.isEmpty)
             ? _invoiceRepository.getInvoicesByContract(contractId)
             : Future<List<dynamic>>.value([]),
         _meterReadingRepository.getMeterReadingsByRoom(roomId),
@@ -51,7 +51,10 @@ class RoomDetailCubit extends Cubit<RoomDetailState> {
         _ticketRepository.getLandlordTickets(),
       ]);
 
-      final invoices = results[0].cast<Invoice>();
+      // Use invoices from RoomDetail if available, otherwise from repository fetch
+      final invoices = roomDetail.invoices.isNotEmpty
+          ? roomDetail.invoices
+          : results[0].cast<Invoice>();
       final meterReadings = results[1].cast<MeterReading>();
       final inventoryItems = results[2].cast<InventoryItem>();
       final allTickets = results[3].cast<Ticket>();

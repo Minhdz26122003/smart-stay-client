@@ -1,20 +1,25 @@
 // lib/features/room/domain/entities/room.dart
 
 enum RoomStatus {
-  empty(0),
-  occupied(1),
-  maintenance(2);
+  available('Available'),
+  occupied('Occupied'),
+  underRepair('UnderRepair'),
+  reserved('Reserved');
 
-  final int value;
+  final String value;
   const RoomStatus(this.value);
 
-  factory RoomStatus.fromInt(int value) {
-    return RoomStatus.values.firstWhere(
-      (e) => e.value == value,
-      orElse: () => RoomStatus.empty,
-    );
+  factory RoomStatus.fromString(String value) {
+    final v = value.toLowerCase();
+    if (v == 'empty' || v == 'available') return RoomStatus.available;
+    if (v == 'rented' || v == 'occupied') return RoomStatus.occupied;
+    if (v == 'maintenance' || v == 'underrepair') return RoomStatus.underRepair;
+    if (v == 'reserved') return RoomStatus.reserved;
+    
+    return RoomStatus.available; // Default
   }
 }
+
 
 class Room {
   final String id;

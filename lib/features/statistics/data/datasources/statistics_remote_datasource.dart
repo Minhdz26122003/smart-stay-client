@@ -6,6 +6,7 @@ import '../../../../core/network/app_exception.dart';
 
 abstract class StatisticsRemoteDataSource {
   Future<FinanceSummaryModel> getFinanceSummary();
+  Future<FinanceSummaryModel> getDashboardStats(String propertyId);
 }
 
 class StatisticsRemoteDataSourceImpl implements StatisticsRemoteDataSource {
@@ -18,7 +19,28 @@ class StatisticsRemoteDataSourceImpl implements StatisticsRemoteDataSource {
       if (response.statusCode == 200 && response.data['success'] == true) {
         return FinanceSummaryModel.fromJson(response.data['data']);
       } else {
-        throw AppException(response.data['message'] ?? 'Failed to get finance summary');
+        throw AppException(
+            response.data['message'] ?? 'Failed to get finance summary');
+      }
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException(e.toString());
+    }
+  }
+
+  @override
+  Future<FinanceSummaryModel> getDashboardStats(String propertyId) async {
+    try {
+      final response = await _dio.get(
+        '/api/v1/statistics/dashboard',
+        queryParameters: {'propertyId': propertyId},
+      );
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return FinanceSummaryModel.fromJson(response.data['data']);
+      } else {
+        throw AppException(
+            response.data['message'] ?? 'Failed to get dashboard stats');
       }
     } on DioException catch (e) {
       throw AppException.fromDioError(e);

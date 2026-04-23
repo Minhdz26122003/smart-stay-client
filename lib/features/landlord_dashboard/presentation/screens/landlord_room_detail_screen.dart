@@ -125,9 +125,16 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
       subtitle =
           '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
       isOccupied = room.status == RoomStatus.occupied;
-      statusLabel = isOccupied
-          ? 'Đang thuê'
-          : (room.status == RoomStatus.maintenance ? 'Bảo trì' : 'Trống');
+      
+      if (isOccupied) {
+        statusLabel = 'Đang thuê';
+      } else if (room.status == RoomStatus.reserved) {
+        statusLabel = 'Đã cọc';
+      } else if (room.status == RoomStatus.underRepair) {
+        statusLabel = 'Đang sửa chữa';
+      } else {
+        statusLabel = 'Trống';
+      }
     }
 
     return SliverAppBar(
@@ -223,43 +230,46 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     return SliverToBoxAdapter(
       child: Container(
         color: Colors.white,
-        child: Row(
-          children: ['Thông tin', 'Thanh toán', 'Sự cố', 'Tài sản']
-              .asMap()
-              .entries
-              .map(
-                (e) => GestureDetector(
-                  onTap: () => setState(() => _tab = e.key),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['Thông tin', 'Thanh toán', 'Sự cố', 'Tài sản']
+                .asMap()
+                .entries
+                .map(
+                  (e) => GestureDetector(
+                    onTap: () => setState(() => _tab = e.key),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: _tab == e.key
+                                ? cs.primary
+                                : Colors.transparent,
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        e.value,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                           color: _tab == e.key
                               ? cs.primary
-                              : Colors.transparent,
-                          width: 2.5,
+                              : cs.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
                     ),
-                    child: Text(
-                      e.value,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _tab == e.key
-                            ? cs.primary
-                            : cs.onSurface.withValues(alpha: 0.4),
-                      ),
-                    ),
                   ),
-                ),
-              )
-              .toList(),
+                )
+                .toList(),
+          ),
         ),
       ),
     );
@@ -289,7 +299,7 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             _SectionCard(
               title: 'Người thuê',
               icon: Icons.person_outline,
-              child: tenant == null
+              child: (tenant == null || state.roomDetail.room.status != RoomStatus.occupied)
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),

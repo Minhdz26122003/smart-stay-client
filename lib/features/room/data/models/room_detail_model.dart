@@ -1,5 +1,6 @@
 // lib/features/room/data/models/room_detail_model.dart
 import '../../domain/entities/room_detail.dart';
+import '../../../../features/invoice/data/models/invoice_model.dart';
 import 'room_model.dart';
 
 class TenantInfoModel {
@@ -17,10 +18,10 @@ class TenantInfoModel {
 
   factory TenantInfoModel.fromJson(Map<String, dynamic> json) {
     return TenantInfoModel(
-      id: json['id'] as String? ?? json['tenantId'] as String? ?? '',
-      fullName: json['fullName'] as String? ?? json['tenantName'] as String? ?? 'Không rõ',
-      phone: json['phone'] as String? ?? '',
-      email: json['email'] as String?,
+      id: (json['id'] ?? json['tenantId'])?.toString() ?? '',
+      fullName: (json['fullName'] ?? json['tenantName'])?.toString() ?? 'Không rõ',
+      phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString(),
     );
   }
 
@@ -51,7 +52,7 @@ class ContractInfoModel {
 
   factory ContractInfoModel.fromJson(Map<String, dynamic> json) {
     return ContractInfoModel(
-      id: json['id'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       startDate: json['startDate'] != null
           ? DateTime.parse(json['startDate'] as String)
           : DateTime.now(),
@@ -59,9 +60,19 @@ class ContractInfoModel {
           ? DateTime.parse(json['endDate'] as String)
           : DateTime.now(),
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0,
-      status: (json['status'] as num?)?.toInt() ?? 0,
+      status: _parseStatus(json['status']),
       scannedContractUrl: json['scannedContractUrl'] as String?,
     );
+  }
+
+  static int _parseStatus(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.toInt();
+    if (v is String) {
+      if (v.toLowerCase() == 'active' || v == '1') return 1;
+      if (v == '0') return 0;
+    }
+    return 0;
   }
 
   ContractInfo toEntity() => ContractInfo(
@@ -78,11 +89,13 @@ class RoomDetailModel {
   final RoomModel room;
   final TenantInfoModel? tenant;
   final ContractInfoModel? contract;
+  final List<InvoiceModel> invoices;
 
   const RoomDetailModel({
     required this.room,
     this.tenant,
     this.contract,
+    this.invoices = const [],
   });
 
   factory RoomDetailModel.fromJson(Map<String, dynamic> json) {
@@ -110,10 +123,17 @@ class RoomDetailModel {
       contract = ContractInfoModel.fromJson(contractJson);
     }
 
+    // Parse invoices
+    final invoicesJson = json['invoices'] as List<dynamic>? ?? [];
+    final invoices = invoicesJson
+        .map((j) => InvoiceModel.fromJson(j as Map<String, dynamic>))
+        .toList();
+
     return RoomDetailModel(
       room: RoomModel.fromJson(json),
       tenant: tenant,
       contract: contract,
+      invoices: invoices,
     );
   }
 
@@ -121,5 +141,6 @@ class RoomDetailModel {
         room: room.toEntity(),
         tenant: tenant?.toEntity(),
         contract: contract?.toEntity(),
+        invoices: invoices.map((m) => m.toEntity()).toList(),
       );
 }

@@ -17,15 +17,15 @@ class ContractModel extends Contract {
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
     return ContractModel(
-      id: json['id'] as String,
-      roomId: json['roomId'] as String? ?? '',
-      tenantId: json['tenantId'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      roomId: json['roomId']?.toString() ?? '',
+      tenantId: json['tenantId']?.toString() ?? '',
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       monthlyRent: (json['monthlyRent'] as num?)?.toDouble() ?? 0,
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0,
       maxOccupants: (json['maxOccupants'] as int?) ?? 1,
-      status: json['status'] as String? ?? 'active',
+      status: ContractStatus.fromString(json['status']?.toString() ?? 'Active'),
     );
   }
 }

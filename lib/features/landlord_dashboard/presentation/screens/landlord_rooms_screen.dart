@@ -19,10 +19,12 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
     switch (status) {
       case RoomStatus.occupied:
         return 'Đang thuê';
-      case RoomStatus.empty:
+      case RoomStatus.available:
         return 'Trống';
-      case RoomStatus.maintenance:
-        return 'Bảo trì';
+      case RoomStatus.underRepair:
+        return 'Sửa chữa';
+      case RoomStatus.reserved:
+        return 'Đã cọc';
     }
   }
 
@@ -30,10 +32,12 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
     switch (status) {
       case RoomStatus.occupied:
         return cs.primary;
-      case RoomStatus.empty:
+      case RoomStatus.available:
         return Colors.green;
-      case RoomStatus.maintenance:
+      case RoomStatus.underRepair:
         return Colors.orange;
+      case RoomStatus.reserved:
+        return Colors.purple;
     }
   }
 
@@ -75,8 +79,9 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
                   : rooms.where((r) => _mapStatusToLabel(r.status) == _filter).toList();
 
               final occupied = rooms.where((r) => r.status == RoomStatus.occupied).length;
-              final empty = rooms.where((r) => r.status == RoomStatus.empty).length;
-              final maintenance = rooms.where((r) => r.status == RoomStatus.maintenance).length;
+              final empty = rooms.where((r) => r.status == RoomStatus.available).length;
+              final repair = rooms.where((r) => r.status == RoomStatus.underRepair).length;
+              final reserved = rooms.where((r) => r.status == RoomStatus.reserved).length;
 
               return Column(
                 children: [
@@ -95,14 +100,16 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
                             const SizedBox(width: 8),
                             _StatChip(count: empty, label: 'Trống', color: Colors.green),
                             const SizedBox(width: 8),
-                            _StatChip(count: maintenance, label: 'Bảo trì', color: Colors.orange),
+                            _StatChip(count: reserved, label: 'Đã cọc', color: Colors.purple),
+                            const SizedBox(width: 8),
+                            _StatChip(count: repair, label: 'Sửa chữa', color: Colors.orange),
                           ],
                         ),
                         const SizedBox(height: 12),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: ['Tất cả', 'Đang thuê', 'Trống', 'Bảo trì']
+                            children: ['Tất cả', 'Đang thuê', 'Trống', 'Đã cọc', 'Sửa chữa']
                                 .map(
                                   (f) => Padding(
                                     padding: const EdgeInsets.only(right: 8, bottom: 12),
@@ -143,7 +150,7 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (ctx, i) {
                         final room = filteredRooms[i];
-                        final isEmpty = room.status == RoomStatus.empty;
+                        final isEmpty = room.status == RoomStatus.available;
                         final color = _mapStatusToColor(room.status, cs);
                         final label = _mapStatusToLabel(room.status);
                         

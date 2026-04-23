@@ -89,19 +89,33 @@ class LandlordHomeScreen extends StatelessWidget {
                           loaded: (props, selected) => props,
                           orElse: () => [],
                         );
-                        
+                        final selectedProperty = propertyState.maybeWhen(
+                          loaded: (props, selected) => selected,
+                          orElse: () => null,
+                        );
+
                         return Row(
                           children: [
-                            const _AreaChip(label: 'Tất cả khu trọ', isSelected: true),
-                            if (properties.isEmpty) ...[
-                              const SizedBox(width: 12),
-                              const _AreaChip(label: 'Khu A - Bình Thạnh', isSelected: false),
-                              const SizedBox(width: 12),
-                              const _AreaChip(label: 'Khu B - Quận 7', isSelected: false),
-                            ] else ...properties.map((p) => Padding(
-                              padding: const EdgeInsets.only(left: 12),
-                              child: _AreaChip(label: p.name, isSelected: false),
-                            )),
+                            _AreaChip(
+                              label: 'Tất cả khu trọ',
+                              isSelected: selectedProperty == null,
+                              onTap: () {
+                                context.read<PropertyCubit>().selectProperty(null);
+                                context.read<FinanceSummaryCubit>().loadFinanceSummary(propertyId: null);
+                              },
+                            ),
+                            if (properties.isNotEmpty)
+                              ...properties.map((p) => Padding(
+                                    padding: const EdgeInsets.only(left: 12),
+                                    child: _AreaChip(
+                                      label: p.name,
+                                      isSelected: selectedProperty?.id == p.id,
+                                      onTap: () {
+                                        context.read<PropertyCubit>().selectProperty(p.id);
+                                        context.read<FinanceSummaryCubit>().loadFinanceSummary(propertyId: p.id);
+                                      },
+                                    ),
+                                  )),
                           ],
                         );
                       },
@@ -116,8 +130,9 @@ class LandlordHomeScreen extends StatelessWidget {
                     builder: (context, financeState) {
                       if (financeState is FinanceSummaryLoaded) {
                         final summary = financeState.summary;
-                        final occupiedPercent = summary.totalRooms > 0 
-                            ? (summary.occupiedRooms / summary.totalRooms * 100).toStringAsFixed(0) 
+                        final occupiedPercent = summary.totalRooms > 0
+                            ? (summary.occupiedRooms / summary.totalRooms * 100)
+                                .toStringAsFixed(0)
                             : '0';
                         return SliverGrid.count(
                           crossAxisCount: 2,
@@ -133,7 +148,8 @@ class LandlordHomeScreen extends StatelessWidget {
                               mainValueColor: Colors.orange,
                               subValueWidget: Text(
                                 ' / ${summary.totalRooms} phòng',
-                                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.black54),
                               ),
                             ),
                             _StatCard(
@@ -148,7 +164,8 @@ class LandlordHomeScreen extends StatelessWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(alpha: 0.1),
+                                  color:
+                                      colorScheme.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -199,14 +216,27 @@ class LandlordHomeScreen extends StatelessWidget {
                           ],
                         );
                       }
-                      
-                      return const SliverToBoxAdapter(
-                        child: Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: CircularProgressIndicator(),
+
+                      if (financeState is FinanceSummaryError) {
+                        return SliverToBoxAdapter(
+                          child: Center(
+                            child: Text('Lỗi: ${financeState.message}'),
                           ),
-                        ),
+                        );
+                      }
+
+                      // Show Skeletons during loading
+                      return SliverGrid.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.15,
+                        children: const [
+                          _StatCardSkeleton(),
+                          _StatCardSkeleton(),
+                          _StatCardSkeleton(),
+                          _StatCardSkeleton(),
+                        ],
                       );
                     },
                   ),
@@ -400,27 +430,143 @@ class LandlordHomeScreen extends StatelessWidget {
 class _AreaChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final VoidCallback onTap;
 
-  const _AreaChip({required this.label, required this.isSelected});
+  const _AreaChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? colorScheme.primary : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : Colors.grey.shade300,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? colorScheme.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : Colors.grey.shade300,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 13,
+          ),
         ),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey.shade700,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          fontSize: 13,
+    );
+  }
+}
+
+class _StatCardSkeleton extends StatefulWidget {
+  const _StatCardSkeleton();
+
+  @override
+  State<_StatCardSkeleton> createState() => _StatCardSkeletonState();
+}
+
+class _StatCardSkeletonState extends State<_StatCardSkeleton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 60,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 80,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

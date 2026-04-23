@@ -65,7 +65,7 @@ class _CreateContractContentState extends State<_CreateContractContent> {
     }
     try {
       final rooms = await sl<RoomRepository>().getRoomsByProperty(propertyId);
-      final available = rooms.where((r) => r.status == RoomStatus.empty).toList();
+      final available = rooms.where((r) => r.status == RoomStatus.available).toList();
       setState(() {
         _rooms = available;
         _loadingRooms = false;

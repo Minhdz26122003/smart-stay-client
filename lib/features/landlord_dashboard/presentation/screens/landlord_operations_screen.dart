@@ -143,24 +143,16 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                     ),
                     loaded: (rooms) {
                       final total = rooms.length;
-                      final occupied = rooms
-                          .where((r) => r.status == RoomStatus.occupied)
-                          .length;
-                      final empty = rooms
-                          .where((r) => r.status == RoomStatus.empty)
-                          .length;
-                      final maintenance = rooms
-                          .where((r) => r.status == RoomStatus.maintenance)
-                          .length;
+                      final occupied = rooms.where((r) => r.status == RoomStatus.occupied).length;
+                      final empty = rooms.where((r) => r.status == RoomStatus.available).length;
+                      final repair = rooms.where((r) => r.status == RoomStatus.underRepair).length;
+                      final reserved = rooms.where((r) => r.status == RoomStatus.reserved).length;
 
-                      final totalCount = total == 0
-                          ? 1
-                          : total; // avoid div by 0
-                      final flexOccupied = (occupied / totalCount * 100)
-                          .toInt();
+                      final totalCount = total == 0 ? 1 : total;
+                      final flexOccupied = (occupied / totalCount * 100).toInt();
                       final flexEmpty = (empty / totalCount * 100).toInt();
-                      final flexMaintenance = (maintenance / totalCount * 100)
-                          .toInt();
+                      final flexRepair = (repair / totalCount * 100).toInt();
+                      final flexReserved = (reserved / totalCount * 100).toInt();
 
                       return Padding(
                         padding: const EdgeInsets.all(16),
@@ -174,8 +166,7 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Trạng thái phòng',
@@ -185,32 +176,35 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                                   Text(
                                     'Tổng $total phòng',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: cs.onSurface.withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              Row(
+                              Wrap(
+                                spacing: 16,
+                                runSpacing: 8,
                                 children: [
                                   _RoomStatusDot(
                                     color: cs.primary,
                                     label: 'Đang thuê',
                                     count: occupied,
                                   ),
-                                  const SizedBox(width: 20),
                                   _RoomStatusDot(
                                     color: Colors.green,
                                     label: 'Trống',
                                     count: empty,
                                   ),
-                                  const SizedBox(width: 20),
+                                  _RoomStatusDot(
+                                    color: Colors.purple,
+                                    label: 'Đã cọc',
+                                    count: reserved,
+                                  ),
                                   _RoomStatusDot(
                                     color: Colors.orange,
-                                    label: 'Bảo trì',
-                                    count: maintenance,
+                                    label: 'Sửa chữa',
+                                    count: repair,
                                   ),
                                 ],
                               ),
@@ -223,26 +217,22 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                                       if (flexOccupied > 0)
                                         Expanded(
                                           flex: flexOccupied,
-                                          child: Container(
-                                            height: 10,
-                                            color: cs.primary,
-                                          ),
+                                          child: Container(height: 10, color: cs.primary),
                                         ),
                                       if (flexEmpty > 0)
                                         Expanded(
                                           flex: flexEmpty,
-                                          child: Container(
-                                            height: 10,
-                                            color: Colors.green,
-                                          ),
+                                          child: Container(height: 10, color: Colors.green),
                                         ),
-                                      if (flexMaintenance > 0)
+                                      if (flexReserved > 0)
                                         Expanded(
-                                          flex: flexMaintenance,
-                                          child: Container(
-                                            height: 10,
-                                            color: Colors.orange,
-                                          ),
+                                          flex: flexReserved,
+                                          child: Container(height: 10, color: Colors.purple),
+                                        ),
+                                      if (flexRepair > 0)
+                                        Expanded(
+                                          flex: flexRepair,
+                                          child: Container(height: 10, color: Colors.orange),
                                         ),
                                     ],
                                   ),

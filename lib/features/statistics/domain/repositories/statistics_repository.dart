@@ -2,5 +2,5 @@
 import '../entities/finance_summary.dart';
 
 abstract class StatisticsRepository {
-  Future<FinanceSummary> getFinanceSummary();
+  Future<FinanceSummary> getFinanceSummary({String? propertyId});
 }

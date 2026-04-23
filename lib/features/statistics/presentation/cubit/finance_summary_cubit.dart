@@ -10,10 +10,10 @@ class FinanceSummaryCubit extends Cubit<FinanceSummaryState> {
       : _repository = repository,
         super(FinanceSummaryInitial());
 
-  Future<void> loadFinanceSummary() async {
+  Future<void> loadFinanceSummary({String? propertyId}) async {
     emit(FinanceSummaryLoading());
     try {
-      final summary = await _repository.getFinanceSummary();
+      final summary = await _repository.getFinanceSummary(propertyId: propertyId);
       emit(FinanceSummaryLoaded(summary));
     } catch (e) {
       emit(FinanceSummaryError(e.toString()));

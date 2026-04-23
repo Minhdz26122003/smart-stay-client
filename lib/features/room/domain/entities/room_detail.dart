@@ -1,5 +1,6 @@
 // lib/features/room/domain/entities/room_detail.dart
 
+import '../../../../features/invoice/domain/entities/invoice.dart';
 import 'room.dart';
 
 class TenantInfo {
@@ -60,11 +61,13 @@ class RoomDetail {
   final Room room;
   final TenantInfo? tenant;
   final ContractInfo? contract;
+  final List<Invoice> invoices;
 
   const RoomDetail({
     required this.room,
     this.tenant,
     this.contract,
+    this.invoices = const [],
   });
 
   bool get hasActiveTenant => tenant != null && contract != null && contract!.isActive;

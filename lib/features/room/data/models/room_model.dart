@@ -9,7 +9,7 @@ class RoomModel {
   final String type;
   final double basePrice;
   final double areaM2;
-  final int status;
+  final String status;
   final int maxOccupants;
 
   const RoomModel({
@@ -25,13 +25,13 @@ class RoomModel {
 
   factory RoomModel.fromJson(Map<String, dynamic> json) {
     return RoomModel(
-      id: json['id'] as String? ?? '',
-      propertyId: json['propertyId'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      type: json['type'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      propertyId: json['propertyId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
       basePrice: (json['basePrice'] as num?)?.toDouble() ?? 0.0,
       areaM2: (json['areaM2'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] as int? ?? 0,
+      status: json['status']?.toString() ?? 'Available',
       maxOccupants: json['maxOccupants'] as int? ?? 1,
     );
   }
@@ -43,7 +43,7 @@ class RoomModel {
         type: type,
         basePrice: basePrice,
         areaM2: areaM2,
-        status: RoomStatus.fromInt(status),
+        status: RoomStatus.fromString(status),
         maxOccupants: maxOccupants,
       );
 }

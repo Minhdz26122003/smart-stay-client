@@ -12,10 +12,15 @@ class StatisticsRepositoryImpl implements StatisticsRepository {
   })  : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<FinanceSummary> getFinanceSummary() async {
+  Future<FinanceSummary> getFinanceSummary({String? propertyId}) async {
     try {
-      final financeSummaryModel = await _remoteDataSource.getFinanceSummary();
-      return financeSummaryModel;
+      final FinanceSummary summary;
+      if (propertyId != null) {
+        summary = await _remoteDataSource.getDashboardStats(propertyId);
+      } else {
+        summary = await _remoteDataSource.getFinanceSummary();
+      }
+      return summary;
     } on AppException {
       rethrow;
     } catch (e) {

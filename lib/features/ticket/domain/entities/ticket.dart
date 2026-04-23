@@ -3,13 +3,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'ticket.freezed.dart';
 
 enum TicketStatus {
-  @JsonValue(0)
+  @JsonValue('Open')
   open,
-  @JsonValue(1)
+  @JsonValue('InProgress')
   inProgress,
-  @JsonValue(2)
+  @JsonValue('Resolved')
   resolved,
-  @JsonValue(3)
+  @JsonValue('Closed')
   closed;
 
   String get displayName {

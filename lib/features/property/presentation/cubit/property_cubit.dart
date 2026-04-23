@@ -26,9 +26,13 @@ class PropertyCubit extends Cubit<PropertyState> {
     }
   }
 
-  void selectProperty(String propertyId) {
+  void selectProperty(String? propertyId) {
     state.maybeWhen(
       loaded: (properties, current) {
+        if (propertyId == null) {
+          emit(PropertyState.loaded(properties, null));
+          return;
+        }
         try {
           final selected = properties.firstWhere((p) => p.id == propertyId);
           emit(PropertyState.loaded(properties, selected));
