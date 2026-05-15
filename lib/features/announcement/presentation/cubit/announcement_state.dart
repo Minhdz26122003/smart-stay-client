@@ -26,6 +26,32 @@ class AnnouncementLoaded extends AnnouncementState {
   List<Object?> get props => [announcements, propertyId];
 }
 
+class AnnouncementDeleteInProgress extends AnnouncementLoaded {
+  final String deletingAnnouncementId;
+
+  const AnnouncementDeleteInProgress({
+    required super.announcements,
+    required super.propertyId,
+    required this.deletingAnnouncementId,
+  });
+
+  @override
+  List<Object?> get props => [...super.props, deletingAnnouncementId];
+}
+
+class AnnouncementDeleteError extends AnnouncementLoaded {
+  final String message;
+
+  const AnnouncementDeleteError({
+    required super.announcements,
+    required super.propertyId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [...super.props, message];
+}
+
 class AnnouncementError extends AnnouncementState {
   final String message;
   const AnnouncementError(this.message);

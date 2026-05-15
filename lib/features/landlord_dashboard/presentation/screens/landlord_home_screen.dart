@@ -100,22 +100,32 @@ class LandlordHomeScreen extends StatelessWidget {
                               label: 'Tất cả khu trọ',
                               isSelected: selectedProperty == null,
                               onTap: () {
-                                context.read<PropertyCubit>().selectProperty(null);
-                                context.read<FinanceSummaryCubit>().loadFinanceSummary(propertyId: null);
+                                context.read<PropertyCubit>().selectProperty(
+                                  null,
+                                );
+                                context
+                                    .read<FinanceSummaryCubit>()
+                                    .loadFinanceSummary(propertyId: null);
                               },
                             ),
                             if (properties.isNotEmpty)
-                              ...properties.map((p) => Padding(
-                                    padding: const EdgeInsets.only(left: 12),
-                                    child: _AreaChip(
-                                      label: p.name,
-                                      isSelected: selectedProperty?.id == p.id,
-                                      onTap: () {
-                                        context.read<PropertyCubit>().selectProperty(p.id);
-                                        context.read<FinanceSummaryCubit>().loadFinanceSummary(propertyId: p.id);
-                                      },
-                                    ),
-                                  )),
+                              ...properties.map(
+                                (p) => Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: _AreaChip(
+                                    label: p.name,
+                                    isSelected: selectedProperty?.id == p.id,
+                                    onTap: () {
+                                      context
+                                          .read<PropertyCubit>()
+                                          .selectProperty(p.id);
+                                      context
+                                          .read<FinanceSummaryCubit>()
+                                          .loadFinanceSummary(propertyId: p.id);
+                                    },
+                                  ),
+                                ),
+                              ),
                           ],
                         );
                       },
@@ -132,7 +142,7 @@ class LandlordHomeScreen extends StatelessWidget {
                         final summary = financeState.summary;
                         final occupiedPercent = summary.totalRooms > 0
                             ? (summary.occupiedRooms / summary.totalRooms * 100)
-                                .toStringAsFixed(0)
+                                  .toStringAsFixed(0)
                             : '0';
                         return SliverGrid.count(
                           crossAxisCount: 2,
@@ -149,7 +159,9 @@ class LandlordHomeScreen extends StatelessWidget {
                               subValueWidget: Text(
                                 ' / ${summary.totalRooms} phòng',
                                 style: const TextStyle(
-                                    fontSize: 12, color: Colors.black54),
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
                               ),
                             ),
                             _StatCard(
@@ -164,8 +176,9 @@ class LandlordHomeScreen extends StatelessWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      colorScheme.primary.withValues(alpha: 0.1),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -210,7 +223,10 @@ class LandlordHomeScreen extends StatelessWidget {
                               mainValueColor: Colors.red,
                               subValueWidget: const Text(
                                 'các hợp đồng',
-                                style: TextStyle(fontSize: 11, color: Colors.red),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.red,
+                                ),
                               ),
                             ),
                           ],
@@ -318,7 +334,8 @@ class LandlordHomeScreen extends StatelessWidget {
                             _QuickAction(
                               icon: Icons.add_circle_rounded,
                               label: 'Tạo hợp\nđồng',
-                              onTap: () => context.push('/landlord/create-contract'),
+                              onTap: () =>
+                                  context.push('/landlord/create-contract'),
                             ),
                             _QuickAction(
                               icon: Icons.domain_add_rounded,
@@ -457,7 +474,7 @@ class _AreaChip extends StatelessWidget {
                     color: colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ]
               : null,
         ),

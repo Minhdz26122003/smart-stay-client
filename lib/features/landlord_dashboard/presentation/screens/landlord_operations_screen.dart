@@ -110,7 +110,7 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                           label: 'Bảng tin',
                           badge: 'Đăng thông báo',
                           onTap: () =>
-                              context.push('/landlord/operations/board'),
+                              context.push('/landlord/operations/listings'),
                         ),
                         _QuickAction(
                           icon: Icons.people_alt_rounded,
@@ -122,8 +122,7 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                           icon: Icons.directions_car_rounded,
                           label: 'Xe &\nKhách',
                           badge: 'Đăng ký mới',
-                          onTap: () =>
-                              context.push('/landlord/operations/listings'),
+                          onTap: () => {},
                         ),
                       ],
                     ),
@@ -143,16 +142,26 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                     ),
                     loaded: (rooms) {
                       final total = rooms.length;
-                      final occupied = rooms.where((r) => r.status == RoomStatus.occupied).length;
-                      final empty = rooms.where((r) => r.status == RoomStatus.available).length;
-                      final repair = rooms.where((r) => r.status == RoomStatus.underRepair).length;
-                      final reserved = rooms.where((r) => r.status == RoomStatus.reserved).length;
+                      final occupied = rooms
+                          .where((r) => r.status == RoomStatus.occupied)
+                          .length;
+                      final empty = rooms
+                          .where((r) => r.status == RoomStatus.available)
+                          .length;
+                      final repair = rooms
+                          .where((r) => r.status == RoomStatus.underRepair)
+                          .length;
+                      final reserved = rooms
+                          .where((r) => r.status == RoomStatus.reserved)
+                          .length;
 
                       final totalCount = total == 0 ? 1 : total;
-                      final flexOccupied = (occupied / totalCount * 100).toInt();
+                      final flexOccupied = (occupied / totalCount * 100)
+                          .toInt();
                       final flexEmpty = (empty / totalCount * 100).toInt();
                       final flexRepair = (repair / totalCount * 100).toInt();
-                      final flexReserved = (reserved / totalCount * 100).toInt();
+                      final flexReserved = (reserved / totalCount * 100)
+                          .toInt();
 
                       return Padding(
                         padding: const EdgeInsets.all(16),
@@ -166,7 +175,8 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Trạng thái phòng',
@@ -176,7 +186,9 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                                   Text(
                                     'Tổng $total phòng',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: cs.onSurface.withValues(alpha: 0.5),
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -217,22 +229,34 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                                       if (flexOccupied > 0)
                                         Expanded(
                                           flex: flexOccupied,
-                                          child: Container(height: 10, color: cs.primary),
+                                          child: Container(
+                                            height: 10,
+                                            color: cs.primary,
+                                          ),
                                         ),
                                       if (flexEmpty > 0)
                                         Expanded(
                                           flex: flexEmpty,
-                                          child: Container(height: 10, color: Colors.green),
+                                          child: Container(
+                                            height: 10,
+                                            color: Colors.green,
+                                          ),
                                         ),
                                       if (flexReserved > 0)
                                         Expanded(
                                           flex: flexReserved,
-                                          child: Container(height: 10, color: Colors.purple),
+                                          child: Container(
+                                            height: 10,
+                                            color: Colors.purple,
+                                          ),
                                         ),
                                       if (flexRepair > 0)
                                         Expanded(
                                           flex: flexRepair,
-                                          child: Container(height: 10, color: Colors.orange),
+                                          child: Container(
+                                            height: 10,
+                                            color: Colors.orange,
+                                          ),
                                         ),
                                     ],
                                   ),
