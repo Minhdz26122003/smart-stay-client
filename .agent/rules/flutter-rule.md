@@ -37,3 +37,9 @@ Bạn là một Senior Flutter Architect. Khi được yêu cầu viết code ho
 
 - Không hardcode màu sắc. BẮT BUỘC đọc từ System Theme qua `Theme.of(context).extension<AppColors>()`.
 - Các Component dùng chung đặt tại `lib/core/widgets/`.
+
+6. QUY TRÌNH PHÁT TRIỂN & BÁO CÁO:
+
+- Trước khi thực hiện, phải đọc và tuân thủ "Hiến pháp" tại `AGENTS.md`.
+- Sau mỗi tác vụ, BẮT BUỘC cập nhật `docs/CHANGELOG.md` theo đúng định dạng ngày tháng.
+- Luôn kiểm tra tính tương thích với Backend API (dotnet) trước khi triển khai các thay đổi lớn về Model.
