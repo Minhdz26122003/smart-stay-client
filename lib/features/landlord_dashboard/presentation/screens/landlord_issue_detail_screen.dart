@@ -155,7 +155,7 @@ class LandlordIssueDetailScreen extends StatelessWidget {
                         ),
                       if (ticket.tenantName != null && ticket.tenantName!.isNotEmpty)
                         const SizedBox(height: 8),
-                      const _InfoItem(icon: Icons.category_outlined, label: 'Báo lỗi điện/nước'),
+                      _InfoItem(icon: Icons.category_outlined, label: ticket.category?.displayName ?? 'Khác'),
                     ],
                   ),
                   const SizedBox(height: 12),

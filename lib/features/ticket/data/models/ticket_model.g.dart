@@ -13,13 +13,21 @@ _TicketModel _$TicketModelFromJson(Map<String, dynamic> json) => _TicketModel(
   tenantId: json['tenantId'] as String,
   tenantName: json['tenantName'] as String?,
   roomName: json['roomName'] as String?,
-  category: (json['category'] as num?)?.toInt(),
-  priority: (json['priority'] as num?)?.toInt(),
+  category: $enumDecodeNullable(
+    _$TicketCategoryEnumMap,
+    json['category'],
+    unknownValue: TicketCategory.other,
+  ),
+  priority: $enumDecodeNullable(
+    _$TicketPriorityEnumMap,
+    json['priority'],
+    unknownValue: TicketPriority.low,
+  ),
   title: json['title'] as String,
   description: json['description'] as String,
-  status:
-      $enumDecodeNullable(_$TicketStatusEnumMap, json['status']) ??
-      TicketStatus.open,
+  status: json['status'] == null
+      ? TicketStatus.open
+      : const TicketStatusConverter().fromJson(json['status']),
   photoUrls: (json['photoUrls'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
@@ -37,19 +45,26 @@ Map<String, dynamic> _$TicketModelToJson(_TicketModel instance) =>
       'tenantId': instance.tenantId,
       'tenantName': instance.tenantName,
       'roomName': instance.roomName,
-      'category': instance.category,
-      'priority': instance.priority,
+      'category': _$TicketCategoryEnumMap[instance.category],
+      'priority': _$TicketPriorityEnumMap[instance.priority],
       'title': instance.title,
       'description': instance.description,
-      'status': _$TicketStatusEnumMap[instance.status]!,
+      'status': const TicketStatusConverter().toJson(instance.status),
       'photoUrls': instance.photoUrls,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };
 
-const _$TicketStatusEnumMap = {
-  TicketStatus.open: 0,
-  TicketStatus.inProgress: 1,
-  TicketStatus.resolved: 2,
-  TicketStatus.closed: 3,
+const _$TicketCategoryEnumMap = {
+  TicketCategory.electricity: 'Electricity',
+  TicketCategory.water: 'Water',
+  TicketCategory.furniture: 'Furniture',
+  TicketCategory.other: 'Other',
+};
+
+const _$TicketPriorityEnumMap = {
+  TicketPriority.low: 'Low',
+  TicketPriority.medium: 'Medium',
+  TicketPriority.high: 'High',
+  TicketPriority.urgent: 'Urgent',
 };

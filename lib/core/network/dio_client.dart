@@ -31,7 +31,7 @@ class DioClient {
       PrettyDioLogger(
         requestHeader: false,
         requestBody: true,
-        responseBody: true,
+        responseBody: false,
         responseHeader: false,
         compact: false,
       ),

@@ -15,11 +15,11 @@ abstract class TicketModel with _$TicketModel {
     required String tenantId,
     String? tenantName,
     String? roomName,
-    int? category,
-    int? priority,
+    @JsonKey(unknownEnumValue: TicketCategory.other) TicketCategory? category,
+    @JsonKey(unknownEnumValue: TicketPriority.low) TicketPriority? priority,
     required String title,
     required String description,
-    @Default(TicketStatus.open) TicketStatus status,
+    @TicketStatusConverter() @Default(TicketStatus.open) TicketStatus status,
     List<String>? photoUrls,
     required DateTime createdAt,
     DateTime? updatedAt,
@@ -44,4 +44,40 @@ abstract class TicketModel with _$TicketModel {
     createdAt: createdAt,
     updatedAt: updatedAt,
   );
+}
+
+class TicketStatusConverter implements JsonConverter<TicketStatus, dynamic> {
+  const TicketStatusConverter();
+
+  @override
+  TicketStatus fromJson(dynamic json) {
+    if (json == null) return TicketStatus.open;
+    if (json is int) {
+      switch (json) {
+        case 0: return TicketStatus.open;
+        case 1: return TicketStatus.inProgress;
+        case 2: return TicketStatus.resolved;
+        case 3: return TicketStatus.closed;
+        default: return TicketStatus.open;
+      }
+    }
+    if (json is String) {
+      switch (json.toLowerCase()) {
+        case 'open':
+        case 'pending':
+        case 'new': return TicketStatus.open;
+        case 'inprogress':
+        case 'in_progress':
+        case 'processing': return TicketStatus.inProgress;
+        case 'resolved':
+        case 'done': return TicketStatus.resolved;
+        case 'closed': return TicketStatus.closed;
+        default: return TicketStatus.open;
+      }
+    }
+    return TicketStatus.open;
+  }
+
+  @override
+  dynamic toJson(TicketStatus object) => object.name;
 }

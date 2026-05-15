@@ -6,7 +6,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const String _devBaseUrl = 'http://192.168.1.14:5043';
+  static const String _devBaseUrl = 'http://192.168.1.7:5043';
 
   static String get baseUrl => _devBaseUrl;
   static const Duration connectTimeout = Duration(seconds: 30);

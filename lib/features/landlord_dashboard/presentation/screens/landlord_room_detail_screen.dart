@@ -125,7 +125,7 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
       subtitle =
           '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
       isOccupied = room.status == RoomStatus.occupied;
-      
+
       if (isOccupied) {
         statusLabel = 'Đang thuê';
       } else if (room.status == RoomStatus.reserved) {
@@ -299,7 +299,9 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             _SectionCard(
               title: 'Người thuê',
               icon: Icons.person_outline,
-              child: (tenant == null || state.roomDetail.room.status != RoomStatus.occupied)
+              child:
+                  (tenant == null ||
+                      state.roomDetail.room.status != RoomStatus.occupied)
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1171,13 +1173,16 @@ class _TicketCard extends StatelessWidget {
   }
 
   Color get _priorityColor {
-    switch (ticket.priorityEnum) {
+    switch (ticket.priority) {
       case TicketPriority.low:
         return Colors.green;
       case TicketPriority.medium:
         return Colors.orange;
       case TicketPriority.high:
+      case TicketPriority.urgent:
         return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1255,7 +1260,7 @@ class _TicketCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  ticket.priorityEnum.displayName,
+                  ticket.priority!.displayName,
                   style: TextStyle(
                     fontSize: 9,
                     color: _priorityColor,

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TicketModel {
 
- String get id; String? get propertyId; String get roomId; String get tenantId; String? get tenantName; String? get roomName; int? get category; int? get priority; String get title; String get description; TicketStatus get status; List<String>? get photoUrls; DateTime get createdAt; DateTime? get updatedAt;
+ String get id; String? get propertyId; String get roomId; String get tenantId; String? get tenantName; String? get roomName;@JsonKey(unknownEnumValue: TicketCategory.other) TicketCategory? get category;@JsonKey(unknownEnumValue: TicketPriority.low) TicketPriority? get priority; String get title; String get description;@TicketStatusConverter() TicketStatus get status; List<String>? get photoUrls; DateTime get createdAt; DateTime? get updatedAt;
 /// Create a copy of TicketModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $TicketModelCopyWith<$Res>  {
   factory $TicketModelCopyWith(TicketModel value, $Res Function(TicketModel) _then) = _$TicketModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String? propertyId, String roomId, String tenantId, String? tenantName, String? roomName, int? category, int? priority, String title, String description, TicketStatus status, List<String>? photoUrls, DateTime createdAt, DateTime? updatedAt
+ String id, String? propertyId, String roomId, String tenantId, String? tenantName, String? roomName,@JsonKey(unknownEnumValue: TicketCategory.other) TicketCategory? category,@JsonKey(unknownEnumValue: TicketPriority.low) TicketPriority? priority, String title, String description,@TicketStatusConverter() TicketStatus status, List<String>? photoUrls, DateTime createdAt, DateTime? updatedAt
 });
 
 
@@ -74,8 +74,8 @@ as String,tenantId: null == tenantId ? _self.tenantId : tenantId // ignore: cast
 as String,tenantName: freezed == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
 as String?,roomName: freezed == roomName ? _self.roomName : roomName // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as int?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
-as int?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as TicketCategory?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as TicketPriority?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TicketStatus,photoUrls: freezed == photoUrls ? _self.photoUrls : photoUrls // ignore: cast_nullable_to_non_nullable
@@ -166,7 +166,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName,  int? category,  int? priority,  String title,  String description,  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName, @JsonKey(unknownEnumValue: TicketCategory.other)  TicketCategory? category, @JsonKey(unknownEnumValue: TicketPriority.low)  TicketPriority? priority,  String title,  String description, @TicketStatusConverter()  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TicketModel() when $default != null:
 return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tenantName,_that.roomName,_that.category,_that.priority,_that.title,_that.description,_that.status,_that.photoUrls,_that.createdAt,_that.updatedAt);case _:
@@ -187,7 +187,7 @@ return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tena
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName,  int? category,  int? priority,  String title,  String description,  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName, @JsonKey(unknownEnumValue: TicketCategory.other)  TicketCategory? category, @JsonKey(unknownEnumValue: TicketPriority.low)  TicketPriority? priority,  String title,  String description, @TicketStatusConverter()  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _TicketModel():
 return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tenantName,_that.roomName,_that.category,_that.priority,_that.title,_that.description,_that.status,_that.photoUrls,_that.createdAt,_that.updatedAt);case _:
@@ -207,7 +207,7 @@ return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tena
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName,  int? category,  int? priority,  String title,  String description,  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? propertyId,  String roomId,  String tenantId,  String? tenantName,  String? roomName, @JsonKey(unknownEnumValue: TicketCategory.other)  TicketCategory? category, @JsonKey(unknownEnumValue: TicketPriority.low)  TicketPriority? priority,  String title,  String description, @TicketStatusConverter()  TicketStatus status,  List<String>? photoUrls,  DateTime createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _TicketModel() when $default != null:
 return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tenantName,_that.roomName,_that.category,_that.priority,_that.title,_that.description,_that.status,_that.photoUrls,_that.createdAt,_that.updatedAt);case _:
@@ -222,7 +222,7 @@ return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tena
 @JsonSerializable()
 
 class _TicketModel extends TicketModel {
-  const _TicketModel({required this.id, this.propertyId, required this.roomId, required this.tenantId, this.tenantName, this.roomName, this.category, this.priority, required this.title, required this.description, this.status = TicketStatus.open, final  List<String>? photoUrls, required this.createdAt, this.updatedAt}): _photoUrls = photoUrls,super._();
+  const _TicketModel({required this.id, this.propertyId, required this.roomId, required this.tenantId, this.tenantName, this.roomName, @JsonKey(unknownEnumValue: TicketCategory.other) this.category, @JsonKey(unknownEnumValue: TicketPriority.low) this.priority, required this.title, required this.description, @TicketStatusConverter() this.status = TicketStatus.open, final  List<String>? photoUrls, required this.createdAt, this.updatedAt}): _photoUrls = photoUrls,super._();
   factory _TicketModel.fromJson(Map<String, dynamic> json) => _$TicketModelFromJson(json);
 
 @override final  String id;
@@ -231,11 +231,11 @@ class _TicketModel extends TicketModel {
 @override final  String tenantId;
 @override final  String? tenantName;
 @override final  String? roomName;
-@override final  int? category;
-@override final  int? priority;
+@override@JsonKey(unknownEnumValue: TicketCategory.other) final  TicketCategory? category;
+@override@JsonKey(unknownEnumValue: TicketPriority.low) final  TicketPriority? priority;
 @override final  String title;
 @override final  String description;
-@override@JsonKey() final  TicketStatus status;
+@override@JsonKey()@TicketStatusConverter() final  TicketStatus status;
  final  List<String>? _photoUrls;
 @override List<String>? get photoUrls {
   final value = _photoUrls;
@@ -281,7 +281,7 @@ abstract mixin class _$TicketModelCopyWith<$Res> implements $TicketModelCopyWith
   factory _$TicketModelCopyWith(_TicketModel value, $Res Function(_TicketModel) _then) = __$TicketModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? propertyId, String roomId, String tenantId, String? tenantName, String? roomName, int? category, int? priority, String title, String description, TicketStatus status, List<String>? photoUrls, DateTime createdAt, DateTime? updatedAt
+ String id, String? propertyId, String roomId, String tenantId, String? tenantName, String? roomName,@JsonKey(unknownEnumValue: TicketCategory.other) TicketCategory? category,@JsonKey(unknownEnumValue: TicketPriority.low) TicketPriority? priority, String title, String description,@TicketStatusConverter() TicketStatus status, List<String>? photoUrls, DateTime createdAt, DateTime? updatedAt
 });
 
 
@@ -307,8 +307,8 @@ as String,tenantId: null == tenantId ? _self.tenantId : tenantId // ignore: cast
 as String,tenantName: freezed == tenantName ? _self.tenantName : tenantName // ignore: cast_nullable_to_non_nullable
 as String?,roomName: freezed == roomName ? _self.roomName : roomName // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as int?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
-as int?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as TicketCategory?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as TicketPriority?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TicketStatus,photoUrls: freezed == photoUrls ? _self._photoUrls : photoUrls // ignore: cast_nullable_to_non_nullable
