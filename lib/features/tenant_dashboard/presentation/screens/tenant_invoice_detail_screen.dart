@@ -87,10 +87,10 @@ class TenantInvoiceDetailScreen extends StatelessWidget {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.2),
+                            color: Colors.red.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.5),
+                              color: Colors.red.withValues(alpha: 0.5),
                             ),
                           ),
                           child: const Row(
@@ -98,14 +98,14 @@ class TenantInvoiceDetailScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.schedule_rounded,
-                                color: Colors.orange,
+                                color: Colors.red,
                                 size: 14,
                               ),
                               SizedBox(width: 6),
                               Text(
                                 'Chưa thanh toán · Hạn 25/04/2026',
                                 style: TextStyle(
-                                  color: Colors.orange,
+                                  color: Colors.red,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                 ),

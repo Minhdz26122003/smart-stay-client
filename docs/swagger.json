@@ -1709,12 +1709,12 @@
     "schemas": {
       "ContractStatus": {
         "enum": [
-          0,
-          1,
-          2
+          "Draft",
+          "Active",
+          "Expired",
+          "Terminated"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "CreateAnnouncementRequest": {
         "type": "object",
@@ -2062,21 +2062,20 @@
       },
       "InvoiceStatus": {
         "enum": [
-          0,
-          1,
-          2
+          "Pending",
+          "Paid",
+          "PartiallyPaid",
+          "Overdue"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "ItemCondition": {
         "enum": [
-          0,
-          1,
-          2
+          "Good",
+          "Damaged",
+          "Lost"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "LoginRequest": {
         "type": "object",
@@ -2162,42 +2161,40 @@
       },
       "ServiceCalcMethod": {
         "enum": [
-          0,
-          1
+          "PerRoom",
+          "PerPerson"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "TicketCategory": {
         "enum": [
-          0,
-          1,
-          2,
-          3
+          "Electrical",
+          "Water",
+          "Device",
+          "Other"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "TicketPriority": {
         "enum": [
-          0,
-          1,
-          2,
-          3
+          "Low",
+          "Medium",
+          "High",
+          "Urgent"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "TicketStatus": {
         "enum": [
-          0,
-          1,
-          2,
-          3,
-          4
+          "Pending",
+          "Accepted",
+          "InProgress",
+          "Resolved",
+          "Cancelled",
+          "Open",
+          "Closed"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "UpdateContractRequest": {
         "type": "object",
@@ -2330,12 +2327,11 @@
       },
       "VehicleType": {
         "enum": [
-          0,
-          1,
-          2
+          "Motorbike",
+          "Car",
+          "ElectricBike"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "VerifyOtpRequest": {
         "type": "object",

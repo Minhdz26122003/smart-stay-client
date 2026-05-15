@@ -54,11 +54,36 @@ class _BoardContentState extends State<_BoardContent> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return BlocBuilder<AnnouncementCubit, AnnouncementState>(
+    return BlocConsumer<AnnouncementCubit, AnnouncementState>(
+      listenWhen: (previous, current) {
+        return current is AnnouncementDeleteError ||
+            (previous is AnnouncementDeleteInProgress &&
+                current is AnnouncementLoaded);
+      },
+      listener: (context, state) {
+        if (state is AnnouncementDeleteError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã xóa bài viết'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
       builder: (context, state) {
-        final announcements = state is AnnouncementLoaded
-            ? state.announcements
-            : <Announcement>[];
+        final announcements =
+            state is AnnouncementLoaded ? state.announcements : <Announcement>[];
+        final deletingAnnouncementId = state is AnnouncementDeleteInProgress
+            ? state.deletingAnnouncementId
+            : null;
 
         final filtered = _tabIdx == 0
             ? announcements
@@ -153,6 +178,8 @@ class _BoardContentState extends State<_BoardContent> {
                                     announcement: filtered[i],
                                     cs: cs,
                                     theme: theme,
+                                    isDeleting: deletingAnnouncementId ==
+                                        filtered[i].id,
                                     onDelete: () => context
                                         .read<AnnouncementCubit>()
                                         .deleteAnnouncement(
@@ -214,12 +241,14 @@ class _PostCard extends StatefulWidget {
   final Announcement announcement;
   final ColorScheme cs;
   final ThemeData theme;
+  final bool isDeleting;
   final VoidCallback onDelete;
 
   const _PostCard({
     required this.announcement,
     required this.cs,
     required this.theme,
+    required this.isDeleting,
     required this.onDelete,
   });
 
@@ -316,9 +345,20 @@ class _PostCardState extends State<_PostCard> {
             IconButton(
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              icon: Icon(Icons.more_vert_rounded,
-                  size: 20, color: cs.onSurface.withValues(alpha: 0.4)),
-              onPressed: () {
+              icon: widget.isDeleting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.primary,
+                      ),
+                    )
+                  : Icon(Icons.more_vert_rounded,
+                      size: 20, color: cs.onSurface.withValues(alpha: 0.4)),
+              onPressed: widget.isDeleting
+                  ? null
+                  : () {
                 showModalBottomSheet(
                   context: context,
                   shape: const RoundedRectangleBorder(
@@ -336,9 +376,33 @@ class _PostCardState extends State<_PostCard> {
                           title: Text('Xóa bài viết',
                               style:
                                   TextStyle(color: Colors.red.shade500)),
-                          onTap: () {
+                          onTap: () async {
                             Navigator.pop(context);
-                            widget.onDelete();
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text('Xóa bài viết'),
+                                content: const Text(
+                                  'Bạn có chắc muốn xóa bài viết này không?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, false),
+                                    child: const Text('Hủy'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, true),
+                                    child: const Text('Xóa'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmed == true && context.mounted) {
+                              widget.onDelete();
+                            }
                           },
                         ),
                       ],

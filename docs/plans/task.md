@@ -1,5 +1,5 @@
 | Task | Status | Note |
 |---|---|---|
-| Task 1: Update Entities | Done | Refactored to native Enums |
-| Task 2: Remove Old Converters | Done | Removed manual converters, used @JsonValue |
-| Task 3: Fix Test and UI | Done | Updated tests and fixed non-exhaustive switches in UI |
+| Task 1: Add delete announcement cubit states | Done | Added delete in-progress and delete error loaded states |
+| Task 2: Wire confirmed delete flow in landlord board screen | Done | Added confirm dialog, card-level spinner, and delete feedback |
+| Task 3: Verify touched files | Not run | Per user request, verification commands were skipped |
