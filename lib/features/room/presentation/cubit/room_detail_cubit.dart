@@ -75,4 +75,14 @@ class RoomDetailCubit extends Cubit<RoomDetailState> {
   }
 
   void refresh(String roomId) => loadRoomDetail(roomId);
+
+  Future<void> deleteRoom(String roomId) async {
+    emit(RoomDetailDeleteLoading());
+    try {
+      await _roomRepository.deleteRoom(roomId);
+      emit(RoomDetailDeleteSuccess());
+    } catch (e) {
+      emit(RoomDetailDeleteError(e.toString()));
+    }
+  }
 }

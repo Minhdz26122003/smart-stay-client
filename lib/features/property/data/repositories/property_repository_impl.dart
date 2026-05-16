@@ -15,4 +15,9 @@ class PropertyRepositoryImpl implements PropertyRepository {
     final models = await _remoteDataSource.getProperties();
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<void> deleteProperty(String propertyId) async {
+    await _remoteDataSource.deleteProperty(propertyId);
+  }
 }

@@ -155,7 +155,18 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
                         final label = _mapStatusToLabel(room.status);
                         
                         return GestureDetector(
-                          onTap: () => context.push('/landlord/operations/room-detail', extra: room.id),
+                          onTap: () async {
+                            final deleted = await context.push<bool>(
+                              '/landlord/operations/room-detail',
+                              extra: room.id,
+                            );
+                            if (!mounted || deleted != true) {
+                              return;
+                            }
+                            await context.read<RoomCubit>().loadRooms(
+                              room.propertyId,
+                            );
+                          },
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -187,11 +198,16 @@ class _LandlordRoomsScreenState extends State<LandlordRoomsScreen> {
                                         crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
                                           Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                room.name,
-                                                style: theme.textTheme.titleMedium?.copyWith(
-                                                  fontWeight: FontWeight.w800,
+                                              Flexible(
+                                                child: Text(
+                                                  room.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 1,
+                                                  style: theme.textTheme.titleMedium?.copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
                                                 ),
                                               ),
                                               const SizedBox(width: 8),

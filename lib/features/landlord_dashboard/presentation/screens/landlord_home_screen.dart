@@ -30,416 +30,490 @@ class LandlordHomeScreen extends StatelessWidget {
           orElse: () => 'Anh Hùng', // Default as per design
         );
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF8F9FF), // Very light background
-          body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Smart Stay',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                            Text(
-                              'Xin chào, $userName',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: colorScheme.primaryContainer,
-                            backgroundImage: const NetworkImage(
-                              'https://i.pravatar.cc/150?img=11',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+        return BlocListener<PropertyCubit, PropertyState>(
+          listener: (context, propertyState) {
+            propertyState.maybeWhen(
+              deleteLoading: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+              },
+              deleteSuccess: () {
+                context.pop(); // Close loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đã xóa khu trọ thành công')),
+                );
+              },
+              deleteError: (msg) {
+                context.pop(); // Close loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lỗi: $msg'),
+                    backgroundColor: Colors.red,
                   ),
-                ),
-
-                // Area Filter Chips
-                SliverToBoxAdapter(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: BlocBuilder<PropertyCubit, PropertyState>(
-                      builder: (context, propertyState) {
-                        final properties = propertyState.maybeWhen(
-                          loaded: (props, selected) => props,
-                          orElse: () => [],
-                        );
-                        final selectedProperty = propertyState.maybeWhen(
-                          loaded: (props, selected) => selected,
-                          orElse: () => null,
-                        );
-
-                        return Row(
-                          children: [
-                            _AreaChip(
-                              label: 'Tất cả khu trọ',
-                              isSelected: selectedProperty == null,
-                              onTap: () {
-                                context.read<PropertyCubit>().selectProperty(
-                                  null,
-                                );
-                                context
-                                    .read<FinanceSummaryCubit>()
-                                    .loadFinanceSummary(propertyId: null);
-                              },
-                            ),
-                            if (properties.isNotEmpty)
-                              ...properties.map(
-                                (p) => Padding(
-                                  padding: const EdgeInsets.only(left: 12),
-                                  child: _AreaChip(
-                                    label: p.name,
-                                    isSelected: selectedProperty?.id == p.id,
-                                    onTap: () {
-                                      context
-                                          .read<PropertyCubit>()
-                                          .selectProperty(p.id);
-                                      context
-                                          .read<FinanceSummaryCubit>()
-                                          .loadFinanceSummary(propertyId: p.id);
-                                    },
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                // Stats Grid
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                  sliver: BlocBuilder<FinanceSummaryCubit, FinanceSummaryState>(
-                    builder: (context, financeState) {
-                      if (financeState is FinanceSummaryLoaded) {
-                        final summary = financeState.summary;
-                        final occupiedPercent = summary.totalRooms > 0
-                            ? (summary.occupiedRooms / summary.totalRooms * 100)
-                                  .toStringAsFixed(0)
-                            : '0';
-                        return SliverGrid.count(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 1.15,
-                          children: [
-                            _StatCard(
-                              title: 'PHÒNG TRỐNG',
-                              icon: Icons.home_rounded,
-                              iconColor: Colors.orange,
-                              mainValue: summary.emptyRooms.toString(),
-                              mainValueColor: Colors.orange,
-                              subValueWidget: Text(
-                                ' / ${summary.totalRooms} phòng',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ),
-                            _StatCard(
-                              title: 'ĐANG THUÊ',
-                              icon: Icons.check_circle_rounded,
-                              iconColor: colorScheme.primary,
-                              mainValue: summary.occupiedRooms.toString(),
-                              mainValueColor: colorScheme.primary,
-                              subValueWidget: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'tỷ lệ lấp đầy $occupiedPercent%',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: colorScheme.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            _StatCard(
-                              title: 'DOANH THU',
-                              icon: Icons.payments_rounded,
-                              iconColor: colorScheme.primary,
-                              mainValue: _formatVnd(summary.totalRevenue),
-                              mainValueColor: colorScheme.primary,
-                              subValueWidget: Row(
-                                children: [
-                                  Icon(
-                                    Icons.trending_up_rounded,
-                                    size: 14,
-                                    color: colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'Dữ liệu T4',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            _StatCard(
-                              title: 'CHƯA THU',
-                              icon: Icons.warning_rounded,
-                              iconColor: Colors.red,
-                              mainValue: _formatVnd(summary.unpaidAmount),
-                              mainValueColor: Colors.red,
-                              subValueWidget: const Text(
-                                'các hợp đồng',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
-                      if (financeState is FinanceSummaryError) {
-                        return SliverToBoxAdapter(
-                          child: Center(
-                            child: Text('Lỗi: ${financeState.message}'),
-                          ),
-                        );
-                      }
-
-                      // Show Skeletons during loading
-                      return SliverGrid.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.15,
-                        children: const [
-                          _StatCardSkeleton(),
-                          _StatCardSkeleton(),
-                          _StatCardSkeleton(),
-                          _StatCardSkeleton(),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-
-                // Alert Banners
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: [
-                        _AlertBanner(
-                          icon: Icons.timer,
-                          iconColor: Colors.orange.shade700,
-                          text: '3 hợp đồng sắp hết hạn\ntrong 30 ngày',
-                          actionText: 'NHẤN XEM',
-                          backgroundColor: Colors.orange.shade50.withValues(
-                            alpha: 0.5,
-                          ),
-                          borderColor: Colors.orange.shade200,
-                          textColor: Colors.orange.shade900,
-                        ),
-                        const SizedBox(height: 12),
-                        _AlertBanner(
-                          icon: Icons.error_outline_rounded,
-                          iconColor: Colors.red.shade600,
-                          text: '5 phòng chưa đóng tiền • Quá hạn 5\nngày',
-                          actionIcon: Icons.chevron_right_rounded,
-                          backgroundColor: Colors.red.shade50.withValues(
-                            alpha: 0.5,
-                          ),
-                          borderColor: Colors.red.shade100,
-                          textColor: Colors.red.shade900,
-                        ),
-                        const SizedBox(height: 12),
-                        _AlertBanner(
-                          icon: Icons.build_rounded,
-                          iconColor: colorScheme.primary,
-                          text: '2 sự cố mới cần xử lý hôm nay',
-                          actionIcon: Icons.chevron_right_rounded,
-                          backgroundColor: colorScheme.primaryContainer
-                              .withValues(alpha: 0.1),
-                          borderColor: colorScheme.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                          textColor: colorScheme.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Quick Actions
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'TIỆN ÍCH NHANH',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _QuickAction(
-                              icon: Icons.camera_alt_rounded,
-                              label: 'Chốt điện\nnước',
-                              onTap: () =>
-                                  context.push('/landlord/finance/settle'),
-                            ),
-                            _QuickAction(
-                              icon: Icons.add_circle_rounded,
-                              label: 'Tạo hợp\nđồng',
-                              onTap: () =>
-                                  context.push('/landlord/create-contract'),
-                            ),
-                            _QuickAction(
-                              icon: Icons.domain_add_rounded,
-                              label: 'Đăng\nphòng',
-                              onTap: () => context.push('/landlord/add'),
-                            ),
-                            _QuickAction(
-                              icon: Icons.campaign_rounded,
-                              label: 'Đăng bảng\ntin',
-                              onTap: () => context.push('/landlord/board'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Recent Activities
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                );
+              },
+              orElse: () {},
+            );
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF8F9FF), // Very light background
+            body: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Hoạt động gần đây',
+                              Text(
+                                'Smart Stay',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
                                 ),
                               ),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Xem tất cả',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_right_alt_rounded,
-                                    size: 16,
-                                    color: colorScheme.primary,
-                                  ),
-                                ],
+                              Text(
+                                'Xin chào, $userName',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-                          _TimelineItem(
-                            icon: Icons.payments_rounded,
-                            iconColor: colorScheme.primary,
-                            title: 'P.201 - Anh Minh đã thanh toán 3.8M',
-                            time: '30 phút trước',
-                            isFirst: true,
-                          ),
-                          _TimelineItem(
-                            icon: Icons.receipt_long_rounded,
-                            iconColor: Colors.blue,
-                            title: 'Hóa đơn T3 đã gửi tới 26 phòng',
-                            time: '2 giờ trước',
-                          ),
-                          _TimelineItem(
-                            icon: Icons.build_rounded,
-                            iconColor: Colors.red,
-                            title: 'P.102 - Sự cố mới: Điều hòa không mát',
-                            time: '3 giờ trước',
-                          ),
-                          _TimelineItem(
-                            icon: Icons.assignment_rounded,
-                            iconColor: Colors.brown,
-                            title: 'P.301 - HĐ hết hạn ngày 01/04',
-                            time: 'Hôm qua',
-                            isLast: true,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: colorScheme.primaryContainer,
+                              backgroundImage: const NetworkImage(
+                                'https://i.pravatar.cc/150?img=11',
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ],
+
+                  // Area Filter Chips
+                  SliverToBoxAdapter(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: BlocBuilder<PropertyCubit, PropertyState>(
+                        builder: (context, propertyState) {
+                          final properties = propertyState.maybeWhen(
+                            loaded: (props, selected) => props,
+                            orElse: () => [],
+                          );
+                          final selectedProperty = propertyState.maybeWhen(
+                            loaded: (props, selected) => selected,
+                            orElse: () => null,
+                          );
+
+                          return Row(
+                            children: [
+                              _AreaChip(
+                                label: 'Tất cả khu trọ',
+                                isSelected: selectedProperty == null,
+                                onTap: () {
+                                  context.read<PropertyCubit>().selectProperty(
+                                    null,
+                                  );
+                                  context
+                                      .read<FinanceSummaryCubit>()
+                                      .loadFinanceSummary(propertyId: null);
+                                },
+                              ),
+                              if (properties.isNotEmpty)
+                                ...properties.map(
+                                  (p) => Padding(
+                                    padding: const EdgeInsets.only(left: 12),
+                                    child: _AreaChip(
+                                      label: p.name,
+                                      isSelected: selectedProperty?.id == p.id,
+                                      onTap: () {
+                                        context
+                                            .read<PropertyCubit>()
+                                            .selectProperty(p.id);
+                                        context
+                                            .read<FinanceSummaryCubit>()
+                                            .loadFinanceSummary(
+                                              propertyId: p.id,
+                                            );
+                                      },
+                                      onLongPress: () {
+                                        _showDeletePropertyDialog(
+                                          context,
+                                          p.id,
+                                          p.name,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // Stats Grid
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                    sliver:
+                        BlocBuilder<FinanceSummaryCubit, FinanceSummaryState>(
+                          builder: (context, financeState) {
+                            if (financeState is FinanceSummaryLoaded) {
+                              final summary = financeState.summary;
+                              final occupiedPercent = summary.totalRooms > 0
+                                  ? (summary.occupiedRooms /
+                                            summary.totalRooms *
+                                            100)
+                                        .toStringAsFixed(0)
+                                  : '0';
+                              return SliverGrid.count(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1.15,
+                                children: [
+                                  _StatCard(
+                                    title: 'PHÒNG TRỐNG',
+                                    icon: Icons.home_rounded,
+                                    iconColor: Colors.orange,
+                                    mainValue: summary.emptyRooms.toString(),
+                                    mainValueColor: Colors.orange,
+                                    subValueWidget: Text(
+                                      ' / ${summary.totalRooms} phòng',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                                  _StatCard(
+                                    title: 'ĐANG THUÊ',
+                                    icon: Icons.check_circle_rounded,
+                                    iconColor: colorScheme.primary,
+                                    mainValue: summary.occupiedRooms.toString(),
+                                    mainValueColor: colorScheme.primary,
+                                    subValueWidget: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primary.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        'tỷ lệ lấp đầy $occupiedPercent%',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  _StatCard(
+                                    title: 'DOANH THU',
+                                    icon: Icons.payments_rounded,
+                                    iconColor: colorScheme.primary,
+                                    mainValue: _formatVnd(summary.totalRevenue),
+                                    mainValueColor: colorScheme.primary,
+                                    subValueWidget: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.trending_up_rounded,
+                                          size: 14,
+                                          color: colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          'Dữ liệu T4',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _StatCard(
+                                    title: 'CHƯA THU',
+                                    icon: Icons.warning_rounded,
+                                    iconColor: Colors.red,
+                                    mainValue: _formatVnd(summary.unpaidAmount),
+                                    mainValueColor: Colors.red,
+                                    subValueWidget: const Text(
+                                      'các hợp đồng',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+
+                            if (financeState is FinanceSummaryError) {
+                              return SliverToBoxAdapter(
+                                child: Center(
+                                  child: Text('Lỗi: ${financeState.message}'),
+                                ),
+                              );
+                            }
+
+                            // Show Skeletons during loading
+                            return SliverGrid.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.15,
+                              children: const [
+                                _StatCardSkeleton(),
+                                _StatCardSkeleton(),
+                                _StatCardSkeleton(),
+                                _StatCardSkeleton(),
+                              ],
+                            );
+                          },
+                        ),
+                  ),
+
+                  // Alert Banners
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _AlertBanner(
+                            icon: Icons.timer,
+                            iconColor: Colors.orange.shade700,
+                            text: '3 hợp đồng sắp hết hạn\ntrong 30 ngày',
+                            actionText: 'NHẤN XEM',
+                            backgroundColor: Colors.orange.shade50.withValues(
+                              alpha: 0.5,
+                            ),
+                            borderColor: Colors.orange.shade200,
+                            textColor: Colors.orange.shade900,
+                          ),
+                          const SizedBox(height: 12),
+                          _AlertBanner(
+                            icon: Icons.error_outline_rounded,
+                            iconColor: Colors.red.shade600,
+                            text: '5 phòng chưa đóng tiền • Quá hạn 5\nngày',
+                            actionIcon: Icons.chevron_right_rounded,
+                            backgroundColor: Colors.red.shade50.withValues(
+                              alpha: 0.5,
+                            ),
+                            borderColor: Colors.red.shade100,
+                            textColor: Colors.red.shade900,
+                          ),
+                          const SizedBox(height: 12),
+                          _AlertBanner(
+                            icon: Icons.build_rounded,
+                            iconColor: colorScheme.primary,
+                            text: '2 sự cố mới cần xử lý hôm nay',
+                            actionIcon: Icons.chevron_right_rounded,
+                            backgroundColor: colorScheme.primaryContainer
+                                .withValues(alpha: 0.1),
+                            borderColor: colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                            textColor: colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Quick Actions
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TIỆN ÍCH NHANH',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _QuickAction(
+                                icon: Icons.camera_alt_rounded,
+                                label: 'Chốt điện\nnước',
+                                onTap: () =>
+                                    context.push('/landlord/finance/settle'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.add_circle_rounded,
+                                label: 'Tạo hợp\nđồng',
+                                onTap: () =>
+                                    context.push('/landlord/create-contract'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.domain_add_rounded,
+                                label: 'Đăng\nphòng',
+                                onTap: () => context.push('/landlord/add'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.campaign_rounded,
+                                label: 'Đăng bảng\ntin',
+                                onTap: () => context.push('/landlord/board'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Recent Activities
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Hoạt động gần đây',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Xem tất cả',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_right_alt_rounded,
+                                      size: 16,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _TimelineItem(
+                              icon: Icons.payments_rounded,
+                              iconColor: colorScheme.primary,
+                              title: 'P.201 - Anh Minh đã thanh toán 3.8M',
+                              time: '30 phút trước',
+                              isFirst: true,
+                            ),
+                            _TimelineItem(
+                              icon: Icons.receipt_long_rounded,
+                              iconColor: Colors.blue,
+                              title: 'Hóa đơn T3 đã gửi tới 26 phòng',
+                              time: '2 giờ trước',
+                            ),
+                            _TimelineItem(
+                              icon: Icons.build_rounded,
+                              iconColor: Colors.red,
+                              title: 'P.102 - Sự cố mới: Điều hòa không mát',
+                              time: '3 giờ trước',
+                            ),
+                            _TimelineItem(
+                              icon: Icons.assignment_rounded,
+                              iconColor: Colors.brown,
+                              title: 'P.301 - HĐ hết hạn ngày 01/04',
+                              time: 'Hôm qua',
+                              isLast: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  void _showDeletePropertyDialog(
+    BuildContext context,
+    String propertyId,
+    String propertyName,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xác nhận xóa?'),
+        content: Text(
+          'Bạn có chắc chắn muốn xóa khu trọ "$propertyName"? Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<PropertyCubit>().deleteProperty(propertyId);
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -448,11 +522,13 @@ class _AreaChip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const _AreaChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -460,6 +536,7 @@ class _AreaChip extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(

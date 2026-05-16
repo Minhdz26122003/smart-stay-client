@@ -18,4 +18,5 @@ abstract class RoomRepository {
     required List<String> facilities,
     List<String>? photoUrls,
   });
+  Future<void> deleteRoom(String roomId);
 }

@@ -10,4 +10,7 @@ class PropertyState with _$PropertyState {
   const factory PropertyState.loading() = _Loading;
   const factory PropertyState.loaded(List<Property> properties, Property? selectedProperty) = _Loaded;
   const factory PropertyState.error(String message) = _Error;
+  const factory PropertyState.deleteLoading() = _DeleteLoading;
+  const factory PropertyState.deleteSuccess() = _DeleteSuccess;
+  const factory PropertyState.deleteError(String message) = _DeleteError;
 }

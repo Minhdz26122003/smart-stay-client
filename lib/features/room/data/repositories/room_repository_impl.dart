@@ -50,4 +50,9 @@ class RoomRepositoryImpl implements RoomRepository {
     );
     return model.toEntity();
   }
+
+  @override
+  Future<void> deleteRoom(String roomId) async {
+    await _remoteDataSource.deleteRoom(roomId);
+  }
 }

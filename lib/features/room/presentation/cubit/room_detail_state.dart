@@ -72,3 +72,12 @@ class RoomDetailError extends RoomDetailState {
   final String message;
   RoomDetailError(this.message);
 }
+
+class RoomDetailDeleteLoading extends RoomDetailState {}
+
+class RoomDetailDeleteSuccess extends RoomDetailState {}
+
+class RoomDetailDeleteError extends RoomDetailState {
+  final String message;
+  RoomDetailDeleteError(this.message);
+}

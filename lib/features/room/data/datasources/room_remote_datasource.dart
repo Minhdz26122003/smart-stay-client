@@ -21,6 +21,7 @@ abstract class RoomRemoteDataSource {
     required List<String> facilities,
     List<String>? photoUrls,
   });
+  Future<void> deleteRoom(String roomId);
 }
 
 class RoomRemoteDataSourceImpl implements RoomRemoteDataSource {
@@ -83,6 +84,15 @@ class RoomRemoteDataSourceImpl implements RoomRemoteDataSource {
       );
       final data = response.data['data'] as Map<String, dynamic>;
       return RoomModel.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<void> deleteRoom(String roomId) async {
+    try {
+      await _dio.delete('/api/v1/rooms/$roomId');
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     }

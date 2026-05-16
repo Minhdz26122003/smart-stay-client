@@ -55,14 +55,17 @@ extension PropertyStatePatterns on PropertyState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( _Loading value)?  loading,TResult Function( _Loaded value)?  loaded,TResult Function( _Error value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Initial value)?  initial,TResult Function( _Loading value)?  loading,TResult Function( _Loaded value)?  loaded,TResult Function( _Error value)?  error,TResult Function( _DeleteLoading value)?  deleteLoading,TResult Function( _DeleteSuccess value)?  deleteSuccess,TResult Function( _DeleteError value)?  deleteError,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial(_that);case _Loading() when loading != null:
 return loading(_that);case _Loaded() when loaded != null:
 return loaded(_that);case _Error() when error != null:
-return error(_that);case _:
+return error(_that);case _DeleteLoading() when deleteLoading != null:
+return deleteLoading(_that);case _DeleteSuccess() when deleteSuccess != null:
+return deleteSuccess(_that);case _DeleteError() when deleteError != null:
+return deleteError(_that);case _:
   return orElse();
 
 }
@@ -80,14 +83,17 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( _Loading value)  loading,required TResult Function( _Loaded value)  loaded,required TResult Function( _Error value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Initial value)  initial,required TResult Function( _Loading value)  loading,required TResult Function( _Loaded value)  loaded,required TResult Function( _Error value)  error,required TResult Function( _DeleteLoading value)  deleteLoading,required TResult Function( _DeleteSuccess value)  deleteSuccess,required TResult Function( _DeleteError value)  deleteError,}){
 final _that = this;
 switch (_that) {
 case _Initial():
 return initial(_that);case _Loading():
 return loading(_that);case _Loaded():
 return loaded(_that);case _Error():
-return error(_that);case _:
+return error(_that);case _DeleteLoading():
+return deleteLoading(_that);case _DeleteSuccess():
+return deleteSuccess(_that);case _DeleteError():
+return deleteError(_that);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -104,14 +110,17 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( _Loading value)?  loading,TResult? Function( _Loaded value)?  loaded,TResult? Function( _Error value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Initial value)?  initial,TResult? Function( _Loading value)?  loading,TResult? Function( _Loaded value)?  loaded,TResult? Function( _Error value)?  error,TResult? Function( _DeleteLoading value)?  deleteLoading,TResult? Function( _DeleteSuccess value)?  deleteSuccess,TResult? Function( _DeleteError value)?  deleteError,}){
 final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial(_that);case _Loading() when loading != null:
 return loading(_that);case _Loaded() when loaded != null:
 return loaded(_that);case _Error() when error != null:
-return error(_that);case _:
+return error(_that);case _DeleteLoading() when deleteLoading != null:
+return deleteLoading(_that);case _DeleteSuccess() when deleteSuccess != null:
+return deleteSuccess(_that);case _DeleteError() when deleteError != null:
+return deleteError(_that);case _:
   return null;
 
 }
@@ -128,13 +137,16 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<Property> properties,  Property? selectedProperty)?  loaded,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function()?  loading,TResult Function( List<Property> properties,  Property? selectedProperty)?  loaded,TResult Function( String message)?  error,TResult Function()?  deleteLoading,TResult Function()?  deleteSuccess,TResult Function( String message)?  deleteError,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Loaded() when loaded != null:
 return loaded(_that.properties,_that.selectedProperty);case _Error() when error != null:
-return error(_that.message);case _:
+return error(_that.message);case _DeleteLoading() when deleteLoading != null:
+return deleteLoading();case _DeleteSuccess() when deleteSuccess != null:
+return deleteSuccess();case _DeleteError() when deleteError != null:
+return deleteError(_that.message);case _:
   return orElse();
 
 }
@@ -152,13 +164,16 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<Property> properties,  Property? selectedProperty)  loaded,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function()  loading,required TResult Function( List<Property> properties,  Property? selectedProperty)  loaded,required TResult Function( String message)  error,required TResult Function()  deleteLoading,required TResult Function()  deleteSuccess,required TResult Function( String message)  deleteError,}) {final _that = this;
 switch (_that) {
 case _Initial():
 return initial();case _Loading():
 return loading();case _Loaded():
 return loaded(_that.properties,_that.selectedProperty);case _Error():
-return error(_that.message);case _:
+return error(_that.message);case _DeleteLoading():
+return deleteLoading();case _DeleteSuccess():
+return deleteSuccess();case _DeleteError():
+return deleteError(_that.message);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -175,13 +190,16 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<Property> properties,  Property? selectedProperty)?  loaded,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function()?  loading,TResult? Function( List<Property> properties,  Property? selectedProperty)?  loaded,TResult? Function( String message)?  error,TResult? Function()?  deleteLoading,TResult? Function()?  deleteSuccess,TResult? Function( String message)?  deleteError,}) {final _that = this;
 switch (_that) {
 case _Initial() when initial != null:
 return initial();case _Loading() when loading != null:
 return loading();case _Loaded() when loaded != null:
 return loaded(_that.properties,_that.selectedProperty);case _Error() when error != null:
-return error(_that.message);case _:
+return error(_that.message);case _DeleteLoading() when deleteLoading != null:
+return deleteLoading();case _DeleteSuccess() when deleteSuccess != null:
+return deleteSuccess();case _DeleteError() when deleteError != null:
+return deleteError(_that.message);case _:
   return null;
 
 }
@@ -385,6 +403,136 @@ class __$ErrorCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
   return _then(_Error(
+null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class _DeleteLoading implements PropertyState {
+  const _DeleteLoading();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeleteLoading);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'PropertyState.deleteLoading()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _DeleteSuccess implements PropertyState {
+  const _DeleteSuccess();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeleteSuccess);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'PropertyState.deleteSuccess()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class _DeleteError implements PropertyState {
+  const _DeleteError(this.message);
+  
+
+ final  String message;
+
+/// Create a copy of PropertyState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DeleteErrorCopyWith<_DeleteError> get copyWith => __$DeleteErrorCopyWithImpl<_DeleteError>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DeleteError&&(identical(other.message, message) || other.message == message));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,message);
+
+@override
+String toString() {
+  return 'PropertyState.deleteError(message: $message)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DeleteErrorCopyWith<$Res> implements $PropertyStateCopyWith<$Res> {
+  factory _$DeleteErrorCopyWith(_DeleteError value, $Res Function(_DeleteError) _then) = __$DeleteErrorCopyWithImpl;
+@useResult
+$Res call({
+ String message
+});
+
+
+
+
+}
+/// @nodoc
+class __$DeleteErrorCopyWithImpl<$Res>
+    implements _$DeleteErrorCopyWith<$Res> {
+  __$DeleteErrorCopyWithImpl(this._self, this._then);
+
+  final _DeleteError _self;
+  final $Res Function(_DeleteError) _then;
+
+/// Create a copy of PropertyState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
+  return _then(_DeleteError(
 null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));

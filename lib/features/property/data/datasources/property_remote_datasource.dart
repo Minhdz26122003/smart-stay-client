@@ -7,6 +7,7 @@ import '../models/property_model.dart';
 
 abstract class PropertyRemoteDataSource {
   Future<List<PropertyModel>> getProperties();
+  Future<void> deleteProperty(String propertyId);
 }
 
 class PropertyRemoteDataSourceImpl implements PropertyRemoteDataSource {
@@ -20,6 +21,15 @@ class PropertyRemoteDataSourceImpl implements PropertyRemoteDataSource {
       return data
           .map((json) => PropertyModel.fromJson(json as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<void> deleteProperty(String propertyId) async {
+    try {
+      await _dio.delete('/api/v1/properties/$propertyId');
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     }

@@ -43,4 +43,21 @@ class PropertyCubit extends Cubit<PropertyState> {
       orElse: () {},
     );
   }
+
+  Future<void> deleteProperty(String id) async {
+    final currentState = state;
+    emit(const PropertyState.deleteLoading());
+    try {
+      await _repository.deleteProperty(id);
+      emit(const PropertyState.deleteSuccess());
+      // Refresh list
+      await loadProperties();
+    } on AppException catch (e) {
+      emit(PropertyState.deleteError(e.message));
+      emit(currentState); // Restore previous state
+    } catch (e) {
+      emit(PropertyState.deleteError(e.toString()));
+      emit(currentState); // Restore previous state
+    }
+  }
 }

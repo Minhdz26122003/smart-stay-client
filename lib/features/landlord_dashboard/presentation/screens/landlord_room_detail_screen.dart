@@ -39,13 +39,41 @@ class _RoomDetailView extends StatefulWidget {
 
 class _RoomDetailViewState extends State<_RoomDetailView> {
   int _tab = 0;
+  bool _isDeleteLoadingVisible = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return BlocBuilder<RoomDetailCubit, RoomDetailState>(
+    return BlocConsumer<RoomDetailCubit, RoomDetailState>(
+      listener: (context, state) {
+        if (state is RoomDetailDeleteLoading) {
+          _isDeleteLoadingVisible = true;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is RoomDetailDeleteSuccess) {
+          if (_isDeleteLoadingVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+            _isDeleteLoadingVisible = false;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã xóa phòng thành công')),
+          );
+          context.pop(true); // Go back to rooms list and trigger reload
+        } else if (state is RoomDetailDeleteError) {
+          if (_isDeleteLoadingVisible) {
+            Navigator.of(context, rootNavigator: true).pop();
+            _isDeleteLoadingVisible = false;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: ${state.message}')),
+          );
+        }
+      },
       builder: (context, state) {
         return Scaffold(
           backgroundColor: const Color(0xFFF8F9FF),
@@ -150,6 +178,23 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           onPressed: () =>
               context.read<RoomDetailCubit>().loadRoomDetail(widget.roomId),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+          onPressed: () {
+            if (state is RoomDetailLoaded) {
+              if (state.roomDetail.room.status == RoomStatus.occupied) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Không thể xóa phòng đang có người ở'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              } else {
+                _showDeleteConfirmationDialog(context);
+              }
+            }
+          },
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -811,6 +856,34 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                 'Chốt hóa đơn',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xác nhận xóa?'),
+        content: const Text(
+          'Bạn có chắc chắn muốn xóa phòng này? Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<RoomDetailCubit>().deleteRoom(widget.roomId);
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
