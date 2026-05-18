@@ -1,59 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../ticket/domain/entities/ticket.dart';
+import '../../../ticket/presentation/bloc/ticket_cubit.dart';
+import '../../../ticket/presentation/bloc/ticket_state.dart';
+
+class TenantReportIssueArgs {
+  final String? propertyId;
+  final String? roomId;
+  final String? locationLabel;
+  final TicketCategory? initialCategory;
+
+  const TenantReportIssueArgs({
+    this.propertyId,
+    this.roomId,
+    this.locationLabel,
+    this.initialCategory,
+  });
+}
+
 class TenantReportIssueScreen extends StatefulWidget {
-  const TenantReportIssueScreen({super.key});
+  final TenantReportIssueArgs? args;
+
+  const TenantReportIssueScreen({super.key, this.args});
+
   @override
-  State<TenantReportIssueScreen> createState() =>
-      _TenantReportIssueScreenState();
+  State<TenantReportIssueScreen> createState() => _TenantReportIssueScreenState();
 }
 
 class _TenantReportIssueScreenState extends State<TenantReportIssueScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descCtrl = TextEditingController();
+  final Color _green = const Color(0xFF1A8A5A);
 
-  String _category = 'Điện';
-  String _location = 'Phòng 205 – Phòng tắm';
-  String _priority = 'Khẩn cấp';
-  final Set<String> _selectedSlots = {'Chiều (13-17h)'};
-  int _photoCount = 2;
+  late TicketCategory _selectedCategory;
+  late TicketPriority _selectedPriority;
+  late String _location;
+  bool _isSubmittingVisible = false;
+
+  static const _fallbackLocation = 'Phong hien tai';
 
   static const _categories = [
-    _Cat('Điện', Icons.electrical_services_rounded, Color(0xFF1A8A5A)),
-    _Cat('Nước', Icons.water_drop_rounded, Color(0xFF1A8A5A)),
-    _Cat('Điều hòa', Icons.ac_unit_rounded, Color(0xFF1A8A5A)),
-    _Cat('Cửa / Khóa', Icons.lock_rounded, Color(0xFF1A8A5A)),
-    _Cat('Thiết bị', Icons.devices_rounded, Color(0xFF1A8A5A)),
-    _Cat('Kết cấu', Icons.foundation_rounded, Color(0xFF1A8A5A)),
-    _Cat('Vệ sinh', Icons.cleaning_services_rounded, Color(0xFF1A8A5A)),
-    _Cat('Côn trùng', Icons.bug_report_rounded, Color(0xFF1A8A5A)),
-    _Cat('Khác', Icons.more_horiz_rounded, Color(0xFF1A8A5A)),
+    (TicketCategory.electricity, Icons.electrical_services_rounded, 'Dien'),
+    (TicketCategory.water, Icons.water_drop_rounded, 'Nuoc'),
+    (TicketCategory.furniture, Icons.chair_rounded, 'Noi that'),
+    (TicketCategory.other, Icons.build_circle_outlined, 'Khac'),
   ];
 
   static const _locations = [
-    'Phòng 205 – Phòng tắm',
-    'Phòng 205 – Phòng ngủ',
-    'Phòng 205 – Bếp',
-    'Phòng 205 – Phòng khách',
-    'Hành lang tầng 2',
-    'Khu vực chung',
+    'Phong hien tai',
+    'Phong tam',
+    'Bep',
+    'Khu vuc chung',
   ];
-
-  static const _timeSlots = [
-    'Sáng (8-12h)',
-    'Chiều (13-17h)',
-    'Tối (18-21h)',
-    'Bất kỳ',
-  ];
-
-  static const _green = Color(0xFF1A8A5A);
 
   @override
   void initState() {
     super.initState();
-    _descCtrl.text =
-        'Vòi nước phòng tắm bị rỉ nước liên tục, '
-        'không tắt được. Nước chảy cả khi đã vặn chặt.';
+    _selectedCategory = widget.args?.initialCategory ?? TicketCategory.other;
+    _selectedPriority = TicketPriority.urgent;
+    _location = widget.args?.locationLabel ?? _fallbackLocation;
+    if (!_locations.contains(_location)) {
+      _location = _fallbackLocation;
+    }
   }
 
   @override
@@ -65,524 +75,388 @@ class _TenantReportIssueScreenState extends State<TenantReportIssueScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final roomContext = _resolveTicketContext(context.read<TicketCubit>().state);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => context.pop(),
-          color: _green,
-        ),
-        title: const Text(
-          'Báo cáo sự cố',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+    return BlocListener<TicketCubit, TicketState>(
+      listener: (context, state) {
+        if (state is TicketSubmitting) {
+          _isSubmittingVisible = true;
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        } else if (state is TicketSubmitSuccess) {
+          _closeSubmittingDialog(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Da gui bao cao su co thanh cong.'),
+              backgroundColor: _green,
+            ),
+          );
+          context.pop(true);
+        } else if (state is TicketSubmitError) {
+          _closeSubmittingDialog(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
+            onPressed: () => context.pop(),
+            color: _green,
+          ),
+          title: const Text(
+            'Bao cao su co',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
         ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Vui lòng cung cấp chi tiết sự cố để chúng tôi hỗ\ntrợ bạn nhanh nhất.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Chọn danh mục
-              _SectionLabel('Chọn danh mục *'),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.15,
-                children: _categories.map((cat) {
-                  final sel = _category == cat.label;
-                  return GestureDetector(
-                    onTap: () => setState(() => _category = cat.label),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      decoration: BoxDecoration(
-                        color: sel ? _green : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: sel ? _green : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            cat.icon,
-                            size: 28,
-                            color: sel ? Colors.white : Colors.grey.shade600,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            cat.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: sel ? Colors.white : Colors.grey.shade700,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Vị trí sự cố
-              _SectionLabel('Vị trí sự cố *'),
-              const SizedBox(height: 8),
-              _DropdownField(
-                value: _location,
-                items: _locations,
-                onChanged: (v) => setState(() => _location = v ?? _location),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Mô tả vấn đề
-              _SectionLabel('Mô tả vấn đề *'),
-              const SizedBox(height: 8),
-              Stack(
-                children: [
-                  TextFormField(
-                    controller: _descCtrl,
-                    maxLines: 5,
-                    maxLength: 500,
-                    validator: (v) =>
-                        v!.trim().isEmpty ? 'Vui lòng mô tả sự cố' : null,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: 'Mô tả chi tiết sự cố...',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: _green),
-                      ),
-                      contentPadding: const EdgeInsets.all(14),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    right: 12,
-                    child: Text(
-                      '${_descCtrl.text.length}/500',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade400,
-                      ),
+        body: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: roomContext == null
+                        ? Colors.orange.withValues(alpha: 0.1)
+                        : _green.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: roomContext == null
+                          ? Colors.orange.withValues(alpha: 0.4)
+                          : _green.withValues(alpha: 0.2),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // ── Thêm ảnh/video
-              Row(
-                children: [
-                  const Icon(
-                    Icons.photo_camera_outlined,
-                    size: 17,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Thêm ảnh/video (tối đa 5)',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 88,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    // Uploaded photos
-                    ...List.generate(_photoCount, (i) {
-                      return GestureDetector(
-                        onTap: () => setState(() => _photoCount--),
-                        child: Container(
-                          width: 84,
-                          height: 84,
-                          margin: const EdgeInsets.only(right: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Icon(
-                                  Icons.image_rounded,
-                                  size: 36,
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: Container(
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(11),
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                    // Add button
-                    if (_photoCount < 5)
-                      GestureDetector(
-                        onTap: () => setState(() => _photoCount++),
-                        child: Container(
-                          width: 84,
-                          height: 84,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              style: BorderStyle.solid,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.camera_alt_outlined,
-                              size: 28,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Mức độ ưu tiên
-              Row(
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    size: 17,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Mức độ ưu tiên',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _PriorityCard(
-                label: 'Khẩn cấp',
-                subtitle: 'Ảnh hưởng sinh hoạt, cần xử lý ngay',
-                icon: Icons.priority_high_rounded,
-                color: Colors.red.shade600,
-                selected: _priority == 'Khẩn cấp',
-                onTap: () => setState(() => _priority = 'Khẩn cấp'),
-              ),
-              const SizedBox(height: 8),
-              _PriorityCard(
-                label: 'Bình thường',
-                subtitle: 'Có thể chờ, xử lý trong 2-3 ngày',
-                icon: Icons.schedule_rounded,
-                color: Colors.orange.shade600,
-                selected: _priority == 'Bình thường',
-                onTap: () => setState(() => _priority = 'Bình thường'),
-              ),
-              const SizedBox(height: 24),
-
-              // ── Thời gian thuận tiện
-              Row(
-                children: [
-                  const Icon(
-                    Icons.access_alarm_rounded,
-                    size: 17,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Thời gian thuận tiện để sửa chữa',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 3.5,
-                children: _timeSlots.map((slot) {
-                  final sel = _selectedSlots.contains(slot);
-                  return GestureDetector(
-                    onTap: () => setState(
-                      () => sel
-                          ? _selectedSlots.remove(slot)
-                          : _selectedSlots.add(slot),
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      decoration: BoxDecoration(
-                        color: sel ? _green : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: sel ? _green : Colors.grey.shade200,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        slot,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: sel ? Colors.white : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 32),
-
-              // ── Submit
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Đã gửi báo cáo! Chủ nhà sẽ phản hồi sớm.',
-                          ),
-                          backgroundColor: _green,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      );
-                      context.pop();
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.check_circle_rounded,
-                    size: 20,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Gửi báo cáo sự cố',
+                  child: Text(
+                    roomContext == null
+                        ? 'Chua xac dinh duoc phong thue hien tai. Vui long mo ticket cu hoac truyen room context truoc khi gui.'
+                        : 'Dang gui cho ${roomContext.locationLabel}.',
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _green,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      fontSize: 12,
+                      color: roomContext == null ? Colors.orange.shade800 : _green,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  'Chủ nhà sẽ nhận thông báo ngay lập tức',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                const SizedBox(height: 20),
+                Text(
+                  'Danh muc *',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 10),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 2.3,
+                  children: _categories.map((entry) {
+                    final isSelected = _selectedCategory == entry.$1;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedCategory = entry.$1),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected ? _green : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected ? _green : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              entry.$2,
+                              color: isSelected ? Colors.white : _green,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                entry.$3,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Vi tri *',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _location,
+                      isExpanded: true,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _location = value);
+                        }
+                      },
+                      items: _locations
+                          .map(
+                            (location) => DropdownMenuItem(
+                              value: location,
+                              child: Text(location),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Mo ta van de *',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _descCtrl,
+                  maxLines: 5,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Vui long mo ta su co';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Mo ta chi tiet su co...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: _green),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Muc do uu tien',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _PriorityOption(
+                  label: 'Khan cap',
+                  subtitle: 'Anh huong sinh hoat, can xu ly ngay',
+                  color: Colors.red.shade600,
+                  selected: _selectedPriority == TicketPriority.urgent,
+                  onTap: () => setState(() => _selectedPriority = TicketPriority.urgent),
+                ),
+                const SizedBox(height: 8),
+                _PriorityOption(
+                  label: 'Binh thuong',
+                  subtitle: 'Co the cho, xu ly trong 2-3 ngay',
+                  color: Colors.orange.shade700,
+                  selected: _selectedPriority == TicketPriority.medium,
+                  onTap: () => setState(() => _selectedPriority = TicketPriority.medium),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _submit(context),
+                    icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                    label: const Text(
+                      'Gui bao cao su co',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-// ─── Section label
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
+  void _submit(BuildContext context) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-  );
-}
-
-// ─── Dropdown
-class _DropdownField extends StatelessWidget {
-  final String value;
-  final List<String> items;
-  final ValueChanged<String?> onChanged;
-  const _DropdownField({
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade200),
-    ),
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: value,
-        isExpanded: true,
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: Colors.grey.shade600,
+    final roomContext = _resolveTicketContext(context.read<TicketCubit>().state);
+    if (roomContext == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Khong xac dinh duoc phong thue hien tai de tao ticket.'),
+          backgroundColor: Colors.orange,
         ),
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
-        ),
-        onChanged: onChanged,
-        items: items
-            .map((loc) => DropdownMenuItem(value: loc, child: Text(loc)))
-            .toList(),
-      ),
-    ),
-  );
+      );
+      return;
+    }
+
+    context.read<TicketCubit>().createTicket(
+          propertyId: roomContext.propertyId,
+          roomId: roomContext.roomId,
+          title: '${_selectedCategory.displayName} - $_location',
+          description: _descCtrl.text.trim(),
+          category: _selectedCategory,
+          priority: _selectedPriority,
+        );
+  }
+
+  _TicketRoomContext? _resolveTicketContext(TicketState state) {
+    final propertyId = widget.args?.propertyId;
+    final roomId = widget.args?.roomId;
+    if (propertyId != null && propertyId.isNotEmpty && roomId != null && roomId.isNotEmpty) {
+      return _TicketRoomContext(
+        propertyId: propertyId,
+        roomId: roomId,
+        locationLabel: widget.args?.locationLabel ?? _fallbackLocation,
+      );
+    }
+
+    if (state is TicketLoaded) {
+      for (final ticket in state.tickets) {
+        final seededPropertyId = ticket.propertyId;
+        if (seededPropertyId != null &&
+            seededPropertyId.isNotEmpty &&
+            ticket.roomId.isNotEmpty) {
+          return _TicketRoomContext(
+            propertyId: seededPropertyId,
+            roomId: ticket.roomId,
+            locationLabel: ticket.roomName ?? _fallbackLocation,
+          );
+        }
+      }
+    }
+
+    return null;
+  }
+
+  void _closeSubmittingDialog(BuildContext context) {
+    if (_isSubmittingVisible) {
+      Navigator.of(context, rootNavigator: true).pop();
+      _isSubmittingVisible = false;
+    }
+  }
 }
 
-// ─── Priority card
-class _PriorityCard extends StatelessWidget {
-  final String label, subtitle;
-  final IconData icon;
+class _PriorityOption extends StatelessWidget {
+  final String label;
+  final String subtitle;
   final Color color;
   final bool selected;
   final VoidCallback onTap;
 
-  const _PriorityCard({
+  const _PriorityOption({
     required this.label,
     required this.subtitle,
-    required this.icon,
     required this.color,
     required this.selected,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: selected ? color : Colors.grey.shade200,
-          width: selected ? 1.8 : 1,
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? color : Colors.grey.shade200,
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.priority_high_rounded, color: color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            if (selected) Icon(Icons.check_circle_rounded, color: color),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
-          if (selected)
-            Icon(Icons.check_circle_rounded, color: color, size: 22),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }
 
-// ─── Data class
-class _Cat {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _Cat(this.label, this.icon, this.color);
+class _TicketRoomContext {
+  final String propertyId;
+  final String roomId;
+  final String locationLabel;
+
+  const _TicketRoomContext({
+    required this.propertyId,
+    required this.roomId,
+    required this.locationLabel,
+  });
 }

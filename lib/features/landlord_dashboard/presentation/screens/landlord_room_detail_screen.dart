@@ -69,9 +69,9 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             Navigator.of(context, rootNavigator: true).pop();
             _isDeleteLoadingVisible = false;
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: ${state.message}')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Lỗi: ${state.message}')));
         }
       },
       builder: (context, state) {
@@ -1234,13 +1234,13 @@ class _TicketCard extends StatelessWidget {
 
   Color get _statusColor {
     switch (ticket.status) {
-      case TicketStatus.open:
+      case TicketStatus.pending:
         return Colors.orange;
       case TicketStatus.inProgress:
         return Colors.blue;
       case TicketStatus.resolved:
         return Colors.green;
-      case TicketStatus.closed:
+      case TicketStatus.cancelled:
         return Colors.grey;
     }
   }

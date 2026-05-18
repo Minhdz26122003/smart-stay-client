@@ -26,7 +26,7 @@ _TicketModel _$TicketModelFromJson(Map<String, dynamic> json) => _TicketModel(
   title: json['title'] as String,
   description: json['description'] as String,
   status: json['status'] == null
-      ? TicketStatus.open
+      ? TicketStatus.pending
       : const TicketStatusConverter().fromJson(json['status']),
   photoUrls: (json['photoUrls'] as List<dynamic>?)
       ?.map((e) => e as String)

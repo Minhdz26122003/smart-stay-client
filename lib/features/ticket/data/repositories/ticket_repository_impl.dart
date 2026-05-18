@@ -31,12 +31,16 @@ class TicketRepositoryImpl implements TicketRepository {
     required String roomId,
     required String title,
     required String description,
+    required TicketCategory category,
+    required TicketPriority priority,
   }) async {
     final model = await _remoteDataSource.createTicket(
       propertyId: propertyId,
       roomId: roomId,
       title: title,
       description: description,
+      category: category,
+      priority: priority,
     );
     return model.toEntity();
   }

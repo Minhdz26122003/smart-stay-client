@@ -9,5 +9,7 @@ abstract class TicketRepository {
     required String roomId,
     required String title,
     required String description,
+    required TicketCategory category,
+    required TicketPriority priority,
   });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+
 import '../../../ticket/presentation/bloc/ticket_cubit.dart';
 import '../../../ticket/presentation/bloc/ticket_state.dart';
 import '../../../ticket/domain/entities/ticket.dart';
@@ -14,25 +14,27 @@ import '../../../room/domain/entities/room.dart';
 extension TicketStatusColor on TicketStatus {
   Color get color {
     switch (this) {
-      case TicketStatus.open:
+      case TicketStatus.pending:
         return Colors.red;
       case TicketStatus.inProgress:
         return Colors.orange;
       case TicketStatus.resolved:
-      case TicketStatus.closed:
         return Colors.green;
+      case TicketStatus.cancelled:
+        return Colors.grey;
     }
   }
 }
 
 class LandlordIssuesScreen extends StatefulWidget {
   const LandlordIssuesScreen({super.key});
+
   @override
   State<LandlordIssuesScreen> createState() => _LandlordIssuesScreenState();
 }
 
 class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
-  String _filter = 'Tất cả';
+  String _filter = 'Tat ca';
 
   @override
   void initState() {
@@ -53,14 +55,6 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
     );
   }
 
-  String _formatTimeAgo(DateTime time) {
-    final diff = DateTime.now().difference(time);
-    if (diff.inDays > 0) return '${diff.inDays} ngày trước';
-    if (diff.inHours > 0) return '${diff.inHours} giờ trước';
-    if (diff.inMinutes > 0) return '${diff.inMinutes} phút trước';
-    return 'Vừa xong';
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -76,12 +70,11 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Quản lý sự cố',
+          'Quản lý sụ cố',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),
         ),
-        centerTitle: false,
       ),
       body: BlocListener<PropertyCubit, PropertyState>(
         listener: (context, state) {
@@ -97,324 +90,246 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
         child: BlocBuilder<RoomCubit, RoomState>(
           builder: (context, roomState) {
             final rooms = roomState.maybeWhen(
-              loaded: (r) => r,
+              loaded: (value) => value,
               orElse: () => <Room>[],
             );
 
             return BlocBuilder<TicketCubit, TicketState>(
               builder: (context, state) {
-                return state.maybeWhen(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (msg) => Center(child: Text('Lỗi: $msg')),
-                  loaded: (tickets) {
-                    final newCount = tickets
-                        .where((i) => i.status == TicketStatus.open)
-                        .length;
-                    final processingCount = tickets
-                        .where((i) => i.status == TicketStatus.inProgress)
-                        .length;
-                    final doneCount = tickets
-                        .where(
-                          (i) =>
-                              i.status == TicketStatus.resolved ||
-                              i.status == TicketStatus.closed,
-                        )
-                        .length;
+                if (state is TicketLoading || state is TicketInitial) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (state is TicketError) {
+                  return Center(child: Text(state.message));
+                }
 
-                    List<Ticket> filtered = tickets;
-                    if (_filter != 'Tất cả') {
-                      filtered = tickets
-                          .where((i) => i.status.displayName == _filter)
-                          .toList();
-                    }
+                final tickets = state is TicketLoaded
+                    ? state.tickets
+                    : <Ticket>[];
+                final pendingCount = tickets
+                    .where((ticket) => ticket.status == TicketStatus.pending)
+                    .length;
+                final inProgressCount = tickets
+                    .where((ticket) => ticket.status == TicketStatus.inProgress)
+                    .length;
+                final resolvedCount = tickets
+                    .where((ticket) => ticket.status == TicketStatus.resolved)
+                    .length;
+                final cancelledCount = tickets
+                    .where((ticket) => ticket.status == TicketStatus.cancelled)
+                    .length;
 
-                    return Column(
-                      children: [
-                        Container(
-                          color: Colors.white,
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8F9FF),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.trending_up,
-                                      size: 14,
-                                      color: Colors.orange,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Tổng cộng: ${tickets.length} sự cố',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: Colors.orange.shade700,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                  ],
-                                ),
+                final filteredTickets = tickets.where((ticket) {
+                  if (_filter == 'Tất cả') return true;
+                  return ticket.status.displayName == _filter;
+                }).toList();
+
+                return Column(
+                  children: [
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FF),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'Tổng cộng ${tickets.length} sự cố',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.w500,
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  _StatChip(
-                                    label: 'Mới báo',
-                                    count: newCount,
-                                    color: Colors.red,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _StatChip(
-                                    label: 'Đang xử lý',
-                                    count: processingCount,
-                                    color: Colors.orange,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _StatChip(
-                                    label: 'Đã xử lý',
-                                    count: doneCount,
-                                    color: Colors.green,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children:
-                                      [
-                                            'Tất cả',
-                                            'Mới báo',
-                                            'Đang xử lý',
-                                            'Đã xử lý',
-                                          ]
-                                          .map(
-                                            (f) => Padding(
-                                              padding: const EdgeInsets.only(
-                                                right: 8,
-                                                bottom: 12,
-                                              ),
-                                              child: GestureDetector(
-                                                onTap: () =>
-                                                    setState(() => _filter = f),
-                                                child: AnimatedContainer(
-                                                  duration: const Duration(
-                                                    milliseconds: 180,
-                                                  ),
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 14,
-                                                        vertical: 7,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: _filter == f
-                                                        ? cs.primary
-                                                        : Colors.transparent,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          20,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: _filter == f
-                                                          ? cs.primary
-                                                          : cs.onSurface
-                                                                .withValues(
-                                                                  alpha: 0.15,
-                                                                ),
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    f,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: _filter == f
-                                                          ? Colors.white
-                                                          : cs.onSurface
-                                                                .withValues(
-                                                                  alpha: 0.6,
-                                                                ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (ctx, i) {
-                              final issue = filtered[i];
-                              final statusColor = issue.status.color;
-                              final isUrgent = false; // Mock for now
-
-                              final foundRoom = rooms
-                                  .where((r) => r.id == issue.roomId)
-                                  .firstOrNull;
-                              final mappedRoomName =
-                                  issue.roomName ?? foundRoom?.name ?? '?';
-
-                              return GestureDetector(
-                                onTap: () => context.push(
-                                  '/landlord/operations/issue-detail',
-                                  extra: issue.copyWith(
-                                    roomName: mappedRoomName,
-                                  ), // Pass ticket with mapped roomName
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _StatChip(
+                                  label: 'Chờ tiếp nhận',
+                                  count: pendingCount,
+                                  color: Colors.red,
                                 ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: isUrgent
-                                        ? Border(
-                                            left: BorderSide(
-                                              color: Colors.red.shade400,
-                                              width: 4,
+                                const SizedBox(width: 8),
+                                _StatChip(
+                                  label: 'Đang xử lý',
+                                  count: inProgressCount,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 8),
+                                _StatChip(
+                                  label: 'Đã xử lý',
+                                  count: resolvedCount,
+                                  color: Colors.green,
+                                ),
+                                const SizedBox(width: 8),
+                                _StatChip(
+                                  label: 'Đã hủy',
+                                  count: cancelledCount,
+                                  color: Colors.grey,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children:
+                                  [
+                                        'Tất cả',
+                                        TicketStatus.pending.displayName,
+                                        TicketStatus.inProgress.displayName,
+                                        TicketStatus.resolved.displayName,
+                                        TicketStatus.cancelled.displayName,
+                                      ]
+                                      .map(
+                                        (filter) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 8,
+                                            bottom: 12,
+                                          ),
+                                          child: GestureDetector(
+                                            onTap: () => setState(
+                                              () => _filter = filter,
                                             ),
-                                          )
-                                        : null,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: statusColor.withValues(
-                                                  alpha: 0.1,
-                                                ),
-                                                shape: BoxShape.circle,
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 180,
                                               ),
-                                              child: Icon(
-                                                Icons.engineering_rounded,
-                                                size: 18,
-                                                color: statusColor,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        'Phòng $mappedRoomName',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          color: cs.primary,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 6,
-                                                              vertical: 1,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: cs
-                                                              .primaryContainer
-                                                              .withValues(
-                                                                alpha: 0.4,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                6,
-                                                              ),
-                                                        ),
-                                                        child: Text(
-                                                          'Kỹ thuật',
-                                                          style: TextStyle(
-                                                            fontSize: 9,
-                                                            color: cs.primary,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    issue.title,
-                                                    style: theme
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 4,
+                                                    horizontal: 14,
+                                                    vertical: 7,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: statusColor.withValues(
-                                                  alpha: 0.1,
-                                                ),
+                                                color: _filter == filter
+                                                    ? cs.primary
+                                                    : Colors.transparent,
                                                 borderRadius:
                                                     BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color: _filter == filter
+                                                      ? cs.primary
+                                                      : cs.onSurface.withValues(
+                                                          alpha: 0.15,
+                                                        ),
+                                                ),
                                               ),
                                               child: Text(
-                                                issue.status.displayName,
+                                                filter,
                                                 style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: statusColor,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: _filter == filter
+                                                      ? Colors.white
+                                                      : cs.onSurface.withValues(
+                                                          alpha: 0.6,
+                                                        ),
                                                 ),
                                               ),
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            if (issue.tenantName != null &&
-                                                issue
-                                                    .tenantName!
-                                                    .isNotEmpty) ...[
-                                              Icon(
-                                                Icons.person_outline,
-                                                size: 12,
-                                                color: cs.onSurface.withValues(
-                                                  alpha: 0.4,
+                                      )
+                                      .toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: filteredTickets.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Không có sự cố phù hợp.',
+                                style: TextStyle(
+                                  color: cs.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: filteredTickets.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final issue = filteredTickets[index];
+                                final foundRoom = rooms
+                                    .where((room) => room.id == issue.roomId)
+                                    .cast<Room?>()
+                                    .firstWhere(
+                                      (room) => room != null,
+                                      orElse: () => null,
+                                    );
+                                final mappedRoomName =
+                                    issue.roomName ??
+                                    foundRoom?.name ??
+                                    'Phòng ?';
+
+                                return GestureDetector(
+                                  onTap: () => context.push(
+                                    '/landlord/operations/issue-detail',
+                                    extra: issue.copyWith(
+                                      roomName: mappedRoomName,
+                                    ),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: issue.status.color
+                                                .withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.engineering_rounded,
+                                            size: 18,
+                                            color: issue.status.color,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                mappedRoomName,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: cs.primary,
                                                 ),
                                               ),
-                                              const SizedBox(width: 4),
+                                              const SizedBox(height: 2),
                                               Text(
-                                                issue.tenantName!,
+                                                issue.title,
+                                                style: theme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                issue.tenantName ??
+                                                    'Người thuê',
                                                 style: theme.textTheme.bodySmall
                                                     ?.copyWith(
                                                       color: cs.onSurface
@@ -423,38 +338,38 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
                                                           ),
                                                     ),
                                               ),
-                                              const SizedBox(width: 12),
                                             ],
-                                            Icon(
-                                              Icons.schedule_rounded,
-                                              size: 12,
-                                              color: cs.onSurface.withValues(
-                                                alpha: 0.4,
-                                              ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: issue.status.color
+                                                .withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              _formatTimeAgo(issue.createdAt),
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                    color: cs.onSurface
-                                                        .withValues(alpha: 0.5),
-                                                  ),
+                                          ),
+                                          child: Text(
+                                            issue.status.displayName,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: issue.status.color,
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                  orElse: () => const SizedBox.shrink(),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 );
               },
             );
@@ -469,14 +384,17 @@ class _StatChip extends StatelessWidget {
   final String label;
   final int count;
   final Color color;
+
   const _StatChip({
     required this.label,
     required this.count,
     required this.color,
   });
+
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
+  Widget build(BuildContext context) {
+    return Container(
+      width: 92,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -488,18 +406,18 @@ class _StatChip extends StatelessWidget {
           Text(
             '$count',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               color: color,
             ),
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 9, color: color),
+            style: TextStyle(fontSize: 10, color: color),
             textAlign: TextAlign.center,
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }

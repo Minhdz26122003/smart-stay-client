@@ -4,26 +4,30 @@ part 'ticket.freezed.dart';
 part 'ticket.g.dart';
 
 enum TicketStatus {
-  @JsonValue('Open')
-  open,
+  @JsonValue('Pending')
+  pending,
   @JsonValue('InProgress')
   inProgress,
   @JsonValue('Resolved')
   resolved,
-  @JsonValue('Closed')
-  closed;
+  @JsonValue('Cancelled')
+  cancelled;
 
   String get displayName {
     switch (this) {
-      case TicketStatus.open:
-        return 'Mới báo';
+      case TicketStatus.pending:
+        return 'Cho tiep nhan';
       case TicketStatus.inProgress:
-        return 'Đang xử lý';
+        return 'Dang xu ly';
       case TicketStatus.resolved:
-      case TicketStatus.closed:
-        return 'Đã xử lý';
+        return 'Da xu ly';
+      case TicketStatus.cancelled:
+        return 'Da huy';
     }
   }
+
+  bool get isFinal =>
+      this == TicketStatus.resolved || this == TicketStatus.cancelled;
 }
 
 @JsonEnum(alwaysCreate: true)
@@ -40,13 +44,13 @@ enum TicketCategory {
   String get displayName {
     switch (this) {
       case TicketCategory.electricity:
-        return 'Điện';
+        return 'Dien';
       case TicketCategory.water:
-        return 'Nước';
+        return 'Nuoc';
       case TicketCategory.furniture:
-        return 'Nội thất';
+        return 'Noi that';
       case TicketCategory.other:
-        return 'Khác';
+        return 'Khac';
     }
   }
 }
@@ -65,9 +69,9 @@ enum TicketPriority {
   String get displayName {
     switch (this) {
       case TicketPriority.low:
-        return 'Thấp';
+        return 'Thap';
       case TicketPriority.medium:
-        return 'Trung bình';
+        return 'Trung binh';
       case TicketPriority.high:
       case TicketPriority.urgent:
         return 'Cao';

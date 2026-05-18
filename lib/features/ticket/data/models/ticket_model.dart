@@ -19,7 +19,7 @@ abstract class TicketModel with _$TicketModel {
     @JsonKey(unknownEnumValue: TicketPriority.low) TicketPriority? priority,
     required String title,
     required String description,
-    @TicketStatusConverter() @Default(TicketStatus.open) TicketStatus status,
+    @TicketStatusConverter() @Default(TicketStatus.pending) TicketStatus status,
     List<String>? photoUrls,
     required DateTime createdAt,
     DateTime? updatedAt,
@@ -51,33 +51,56 @@ class TicketStatusConverter implements JsonConverter<TicketStatus, dynamic> {
 
   @override
   TicketStatus fromJson(dynamic json) {
-    if (json == null) return TicketStatus.open;
+    if (json == null) return TicketStatus.pending;
     if (json is int) {
       switch (json) {
-        case 0: return TicketStatus.open;
-        case 1: return TicketStatus.inProgress;
-        case 2: return TicketStatus.resolved;
-        case 3: return TicketStatus.closed;
-        default: return TicketStatus.open;
+        case 0:
+          return TicketStatus.pending;
+        case 1:
+          return TicketStatus.inProgress;
+        case 2:
+          return TicketStatus.resolved;
+        case 3:
+          return TicketStatus.cancelled;
+        default:
+          return TicketStatus.pending;
       }
     }
     if (json is String) {
       switch (json.toLowerCase()) {
         case 'open':
         case 'pending':
-        case 'new': return TicketStatus.open;
+        case 'new':
+          return TicketStatus.pending;
         case 'inprogress':
         case 'in_progress':
-        case 'processing': return TicketStatus.inProgress;
+        case 'processing':
+          return TicketStatus.inProgress;
         case 'resolved':
-        case 'done': return TicketStatus.resolved;
-        case 'closed': return TicketStatus.closed;
-        default: return TicketStatus.open;
+        case 'done':
+          return TicketStatus.resolved;
+        case 'cancelled':
+        case 'canceled':
+        case 'closed':
+          return TicketStatus.cancelled;
+        default:
+          return TicketStatus.pending;
       }
     }
-    return TicketStatus.open;
+    return TicketStatus.pending;
   }
 
   @override
-  dynamic toJson(TicketStatus object) => object.name;
+  dynamic toJson(TicketStatus object) {
+    switch (object) {
+      case TicketStatus.pending:
+        return 'Pending';
+      case TicketStatus.inProgress:
+        return 'InProgress';
+      case TicketStatus.resolved:
+        return 'Resolved';
+      case TicketStatus.cancelled:
+        return 'Cancelled';
+    }
+  }
 }

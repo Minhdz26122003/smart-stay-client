@@ -4,7 +4,7 @@ import 'package:smart_stay_client/features/ticket/domain/entities/ticket.dart';
 
 void main() {
   group('TicketModel.fromJson', () {
-    test('parses backend string payload for category priority and status', () {
+    test('parses backend string payload for category priority and pending status', () {
       final json = <String, dynamic>{
         'id': '5fb4e510-fca0-4130-a069-17effc409608',
         'roomId': 'a0000001-0000-0000-0000-000000000001',
@@ -24,7 +24,25 @@ void main() {
 
       expect(model.category, TicketCategory.water);
       expect(model.priority, TicketPriority.medium);
-      expect(model.status, TicketStatus.open);
+      expect(model.status, TicketStatus.pending);
+    });
+
+    test('parses backend int payload for cancelled status', () {
+      final json = <String, dynamic>{
+        'id': 'cancelled-ticket',
+        'roomId': 'room-1',
+        'tenantId': 'tenant-1',
+        'category': 'Other',
+        'title': 'Khong can sua nua',
+        'description': 'Nguoi thue da huy yeu cau.',
+        'status': 3,
+        'priority': 'Low',
+        'createdAt': '2026-04-04T04:02:42.344849Z',
+      };
+
+      final model = TicketModel.fromJson(json);
+
+      expect(model.status, TicketStatus.cancelled);
     });
   });
 }

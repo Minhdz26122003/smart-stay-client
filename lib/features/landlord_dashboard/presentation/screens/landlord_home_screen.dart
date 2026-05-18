@@ -125,18 +125,18 @@ class LandlordHomeScreen extends StatelessWidget {
 
                           return Row(
                             children: [
-                              _AreaChip(
-                                label: 'Tất cả khu trọ',
-                                isSelected: selectedProperty == null,
-                                onTap: () {
-                                  context.read<PropertyCubit>().selectProperty(
-                                    null,
-                                  );
-                                  context
-                                      .read<FinanceSummaryCubit>()
-                                      .loadFinanceSummary(propertyId: null);
-                                },
-                              ),
+                              // _AreaChip(
+                              //   label: 'Tất cả khu trọ',
+                              //   isSelected: selectedProperty == null,
+                              //   onTap: () {
+                              //     context.read<PropertyCubit>().selectProperty(
+                              //       null,
+                              //     );
+                              //     context
+                              //         .read<FinanceSummaryCubit>()
+                              //         .loadFinanceSummary(propertyId: null);
+                              //   },
+                              // ),
                               if (properties.isNotEmpty)
                                 ...properties.map(
                                   (p) => Padding(

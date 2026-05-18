@@ -62,10 +62,10 @@ class RoomDetailLoaded extends RoomDetailState {
   }
 
   List<Ticket> get openTickets =>
-      tickets.where((t) => t.status == TicketStatus.open || t.status == TicketStatus.inProgress).toList();
+      tickets.where((t) => t.status == TicketStatus.pending || t.status == TicketStatus.inProgress).toList();
 
   List<Ticket> get resolvedTickets =>
-      tickets.where((t) => t.status == TicketStatus.resolved || t.status == TicketStatus.closed).toList();
+      tickets.where((t) => t.status == TicketStatus.resolved || t.status == TicketStatus.cancelled).toList();
 }
 
 class RoomDetailError extends RoomDetailState {

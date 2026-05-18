@@ -222,7 +222,7 @@ return $default(_that.id,_that.propertyId,_that.roomId,_that.tenantId,_that.tena
 @JsonSerializable()
 
 class _TicketModel extends TicketModel {
-  const _TicketModel({required this.id, this.propertyId, required this.roomId, required this.tenantId, this.tenantName, this.roomName, @JsonKey(unknownEnumValue: TicketCategory.other) this.category, @JsonKey(unknownEnumValue: TicketPriority.low) this.priority, required this.title, required this.description, @TicketStatusConverter() this.status = TicketStatus.open, final  List<String>? photoUrls, required this.createdAt, this.updatedAt}): _photoUrls = photoUrls,super._();
+  const _TicketModel({required this.id, this.propertyId, required this.roomId, required this.tenantId, this.tenantName, this.roomName, @JsonKey(unknownEnumValue: TicketCategory.other) this.category, @JsonKey(unknownEnumValue: TicketPriority.low) this.priority, required this.title, required this.description, @TicketStatusConverter() this.status = TicketStatus.pending, final  List<String>? photoUrls, required this.createdAt, this.updatedAt}): _photoUrls = photoUrls,super._();
   factory _TicketModel.fromJson(Map<String, dynamic> json) => _$TicketModelFromJson(json);
 
 @override final  String id;

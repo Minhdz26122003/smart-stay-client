@@ -306,11 +306,18 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'report',
-                  builder: (_, __) => const TenantReportIssueScreen(),
+                  builder: (_, state) {
+                    final args = state.extra as TenantReportIssueArgs?;
+                    return TenantReportIssueScreen(args: args);
+                  },
                 ),
                 GoRoute(
                   path: 'issue-detail',
-                  builder: (_, __) => const TenantIssueDetailScreen(),
+                  builder: (_, state) {
+                    final ticket = state.extra as Ticket?;
+                    if (ticket == null) return const TenantServicesScreen();
+                    return TenantIssueDetailScreen(ticket: ticket);
+                  },
                 ),
               ],
             ),
@@ -344,11 +351,18 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/tenant/services/report',
-      builder: (_, __) => const TenantReportIssueScreen(),
+      builder: (_, state) {
+        final args = state.extra as TenantReportIssueArgs?;
+        return TenantReportIssueScreen(args: args);
+      },
     ),
     GoRoute(
       path: '/tenant/issue-detail',
-      builder: (_, __) => const TenantIssueDetailScreen(),
+      builder: (_, state) {
+        final ticket = state.extra as Ticket?;
+        if (ticket == null) return const TenantServicesScreen();
+        return TenantIssueDetailScreen(ticket: ticket);
+      },
     ),
     GoRoute(
       path: '/tenant/invoice-detail',

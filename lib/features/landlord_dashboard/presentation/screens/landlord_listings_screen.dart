@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_stay_client/core/widgets/app_network_image.dart';
 import '../../../property/presentation/cubit/property_state.dart';
 import '../../../listing/presentation/cubit/listing_cubit.dart';
 import '../../../listing/presentation/cubit/listing_state.dart';
 import '../../../property/presentation/cubit/property_cubit.dart';
 import '../../../listing/domain/entities/listing.dart';
+// import '../../../core/widgets/app_network_image.dart';
 
 class LandlordListingsScreen extends StatefulWidget {
   const LandlordListingsScreen({super.key});
@@ -102,7 +104,7 @@ class _LandlordListingsScreenState extends State<LandlordListingsScreen> {
                             ),
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                             itemCount: listings.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 12),
@@ -136,8 +138,8 @@ class _LandlordListingsScreenState extends State<LandlordListingsScreen> {
                                           children: [
                                             if (l.photoUrls.isNotEmpty)
                                               Positioned.fill(
-                                                child: Image.network(
-                                                  l.photoUrls.first,
+                                                child: AppNetworkImage(
+                                                  imageUrl: l.photoUrls.first,
                                                   fit: BoxFit.cover,
                                                 ),
                                               )
