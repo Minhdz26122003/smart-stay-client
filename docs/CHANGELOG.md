@@ -1,8 +1,16 @@
 # Changelog - Smart Stay
 
-## [2026-05-18] - UI & Image Load Fix
+## [2026-05-18] - Operations & UI Updates
 ### Added
 - **AppNetworkImage:** Tạo mới widget hiển thị hình ảnh từ mạng dùng chung cho toàn bộ ứng dụng, tích hợp logic định dạng và thay thế tự động hostname local (`storage.smartstay.local`, `localhost`, `127.0.0.1`) sang IP host của Backend để chạy được trên thiết bị di động thật và máy giả lập. Tích hợp shimmer loading và biểu tượng lỗi placeholder trang nhã để nâng cao trải nghiệm thẩm mỹ.
+- **LandlordOperationsScreen (Sự cố):** Tích hợp dữ liệu thật từ `TicketCubit` để tải động danh sách sự cố đang chờ xử lý (`pending` và `inProgress`). Thêm hàm helper `_formatTimeAgo` hiển thị khoảng thời gian trôi qua trực quan bằng tiếng Việt và chuyển hướng đúng ticket đến màn hình chi tiết.
+- **LandlordContractsScreen (Hợp đồng):** Thiết kế mới màn hình quản lý hợp đồng cao cấp dành cho chủ nhà. Tải danh sách phòng động từ `RoomCubit`, giả lập chi tiết hợp đồng cực kỳ sinh động trên các phòng đang thuê và đã cọc giữ chỗ. Tích hợp thanh tìm kiếm nhạy bén cùng bộ lọc Tab trạng thái (Tất cả, Đang hoạt động, Sắp hết hạn, Giữ chỗ), hỗ trợ điều hướng nhanh sang chi tiết phòng hoặc tạo hợp đồng mới.
+- **GoRouter Navigation:** Định nghĩa route `/landlord/operations/contracts` trong `app_router.dart` và cập nhật Quick Action "Hợp đồng" trên tab Vận hành trỏ trực tiếp sang màn hình quản lý hợp đồng mới thay vì trực tiếp tạo hợp đồng.
+
+
+### Changed
+- **LandlordContractsScreen:** Chuyá»ƒn tá»« dá»¯ liá»‡u giáº£ láº­p sang dá»¯ liá»‡u tháº­t tá»« API `/api/v1/contracts/property/{propertyId}` theo property Ä‘ang chá»n. MÃ n hÃ¬nh nay dá»±a trÃªn `ContractCubit`, há»— trá»£ tÃ¬m kiáº¿m theo phÃ²ng/tÃªn khÃ¡ch thuÃª vÃ  bá»™ lá»c `Äang hoáº¡t Ä‘á»™ng`, `Sáº¯p háº¿t háº¡n`, `ÄÃ£ háº¿t háº¡n`.
+- **Contract Feature:** Má»Ÿ rá»™ng `Contract`/`ContractModel` Ä‘á»ƒ map thÃªm `roomName`, `tenantName`, `tenantPhone`, `scannedContractUrl`, `createdAt`, Ä‘á»“ng thá»i bá»• sung luá»“ng `getContractsByProperty(...)` xuyÃªn suá»‘t datasource, repository vÃ  cubit.
 
 ### Fixed
 - **LandlordListingsScreen:** 

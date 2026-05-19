@@ -70,7 +70,7 @@ class _LandlordIssuesScreenState extends State<LandlordIssuesScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Quản lý sụ cố',
+          'Quản lý sự cố',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w700,
           ),

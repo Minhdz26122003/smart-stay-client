@@ -12,6 +12,17 @@ class ContractCubit extends Cubit<ContractState> {
       : _repository = repository,
         super(ContractInitial());
 
+  Future<void> loadContractsByProperty(String propertyId) async {
+    try {
+      emit(const ContractLoading());
+      final contracts = await _repository.getContractsByProperty(propertyId);
+      emit(ContractLoaded(contracts: contracts, propertyId: propertyId));
+    } catch (e) {
+      final msg = e is AppException ? e.message : e.toString();
+      emit(ContractError(msg));
+    }
+  }
+
   Future<void> createContract({
     required String roomId,
     required String tenantPhone,

@@ -16,4 +16,5 @@ abstract class ContractRepository {
     required int maxOccupants,
   });
   Future<List<Contract>> getContractsByRoom(String roomId);
+  Future<List<Contract>> getContractsByProperty(String propertyId);
 }

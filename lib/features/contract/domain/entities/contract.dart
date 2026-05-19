@@ -25,22 +25,32 @@ class Contract {
   final String id;
   final String roomId;
   final String tenantId;
+  final String? roomName;
+  final String? tenantName;
+  final String? tenantPhone;
   final DateTime startDate;
   final DateTime endDate;
   final double monthlyRent;
   final double depositAmount;
   final int maxOccupants;
   final ContractStatus status;
+  final String? scannedContractUrl;
+  final DateTime? createdAt;
 
   const Contract({
     required this.id,
     required this.roomId,
     required this.tenantId,
+    this.roomName,
+    this.tenantName,
+    this.tenantPhone,
     required this.startDate,
     required this.endDate,
     required this.monthlyRent,
     required this.depositAmount,
     required this.maxOccupants,
     required this.status,
+    this.scannedContractUrl,
+    this.createdAt,
   });
 }
