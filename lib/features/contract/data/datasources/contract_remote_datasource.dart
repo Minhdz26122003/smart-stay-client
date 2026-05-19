@@ -8,6 +8,7 @@ import '../models/contract_model.dart';
 abstract class ContractRemoteDataSource {
   Future<ContractModel> createContract(Map<String, dynamic> payload);
   Future<List<ContractModel>> getContractsByRoom(String roomId);
+  Future<List<ContractModel>> getContractsByProperty(String propertyId);
 }
 
 class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
@@ -28,6 +29,19 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
   Future<List<ContractModel>> getContractsByRoom(String roomId) async {
     try {
       final response = await _dio.get('/api/v1/contracts/room/$roomId');
+      final data = response.data['data'] as List<dynamic>? ?? [];
+      return data
+          .map((json) => ContractModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<List<ContractModel>> getContractsByProperty(String propertyId) async {
+    try {
+      final response = await _dio.get('/api/v1/contracts/property/$propertyId');
       final data = response.data['data'] as List<dynamic>? ?? [];
       return data
           .map((json) => ContractModel.fromJson(json as Map<String, dynamic>))

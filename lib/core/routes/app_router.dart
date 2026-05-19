@@ -29,6 +29,7 @@ import '../../features/landlord_dashboard/presentation/screens/landlord_room_det
 import '../../features/landlord_dashboard/presentation/screens/landlord_post_room_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_add_room_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_listings_screen.dart';
+import '../../features/landlord_dashboard/presentation/screens/landlord_contracts_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_create_contract_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_issues_screen.dart';
 import '../../features/landlord_dashboard/presentation/screens/landlord_issue_detail_screen.dart';
@@ -146,6 +147,10 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'listings',
                   builder: (_, __) => const LandlordListingsScreen(),
+                ),
+                GoRoute(
+                  path: 'contracts',
+                  builder: (_, __) => const LandlordContractsScreen(),
                 ),
                 GoRoute(
                   path: 'create-contract',

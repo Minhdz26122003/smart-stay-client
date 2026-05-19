@@ -7,6 +7,9 @@ import '../../../room/presentation/cubit/room_state.dart';
 import '../../../property/presentation/cubit/property_cubit.dart';
 import '../../../property/presentation/cubit/property_state.dart';
 import '../../../room/domain/entities/room.dart';
+import '../../../ticket/presentation/bloc/ticket_cubit.dart';
+import '../../../ticket/presentation/bloc/ticket_state.dart';
+import '../../../ticket/domain/entities/ticket.dart';
 
 class LandlordOperationsScreen extends StatefulWidget {
   const LandlordOperationsScreen({super.key});
@@ -20,6 +23,8 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<TicketCubit>().loadLandlordTickets();
+    
     final propState = context.read<PropertyCubit>().state;
     propState.maybeWhen(
       loaded: (props, selected) {
@@ -29,6 +34,23 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
       },
       orElse: () {},
     );
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inSeconds < 60) {
+      return 'Vừa xong';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} phút trước';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 30) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+    }
   }
 
   @override
@@ -94,7 +116,7 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
                           label: 'Hợp\nđồng',
                           badge: 'Xem chi tiết',
                           onTap: () => context.push(
-                            '/landlord/operations/create-contract',
+                            '/landlord/operations/contracts',
                           ),
                         ),
                         _QuickAction(
@@ -278,86 +300,156 @@ class _LandlordOperationsScreenState extends State<LandlordOperationsScreen> {
             ),
 
             // ── Issues Section ────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+            BlocBuilder<TicketCubit, TicketState>(
+              builder: (context, state) {
+                final tickets = state is TicketLoaded ? state.tickets : <Ticket>[];
+                final pendingTickets = tickets
+                    .where((t) =>
+                        t.status == TicketStatus.pending ||
+                        t.status == TicketStatus.inProgress)
+                    .toList();
+
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.engineering_rounded,
-                          color: Colors.orange.shade700,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Sự cố cần xử lý',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            '2',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.engineering_rounded,
+                              color: Colors.orange.shade700,
+                              size: 18,
                             ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sự cố cần xử lý',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (pendingTickets.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${pendingTickets.length}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              context.push('/landlord/operations/issues'),
+                          child: Text(
+                            'Xem tất cả',
+                            style: TextStyle(color: cs.primary),
                           ),
                         ),
                       ],
                     ),
-                    TextButton(
-                      onPressed: () =>
-                          context.push('/landlord/operations/issues'),
-                      child: Text(
-                        'Xem tất cả',
-                        style: TextStyle(color: cs.primary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
 
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _IssueCard(
-                    room: 'P.102',
-                    issue: 'Điều hòa không mát',
-                    tenant: 'Trần Thị Bình',
-                    timeAgo: '3 giờ trước',
-                    isUrgent: true,
-                    onTap: () =>
-                        context.push('/landlord/operations/issue-detail'),
+            BlocBuilder<TicketCubit, TicketState>(
+              builder: (context, state) {
+                if (state is TicketLoading) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  );
+                }
+
+                if (state is TicketError) {
+                  return SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Text(
+                        'Lỗi tải sự cố: ${state.message}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  );
+                }
+
+                final tickets = state is TicketLoaded ? state.tickets : <Ticket>[];
+                final pendingTickets = tickets
+                    .where((t) =>
+                        t.status == TicketStatus.pending ||
+                        t.status == TicketStatus.inProgress)
+                    .toList();
+
+                if (pendingTickets.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Không có sự cố nào đang chờ xử lý.',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final t = pendingTickets[index];
+                        final isUrgent = t.priority == TicketPriority.urgent ||
+                            t.priority == TicketPriority.high;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _IssueCard(
+                            room: t.roomName ?? 'Phòng trống',
+                            issue: t.title,
+                            tenant: t.tenantName ?? 'Người thuê',
+                            timeAgo: _formatTimeAgo(t.createdAt),
+                            isUrgent: isUrgent,
+                            onTap: () => context.push(
+                              '/landlord/operations/issue-detail',
+                              extra: t,
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: pendingTickets.length,
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  _IssueCard(
-                    room: 'P.305',
-                    issue: 'Đèn hành lang tầng 3 hỏng',
-                    tenant: 'Lê Văn D',
-                    timeAgo: '1 ngày trước',
-                    isUrgent: false,
-                    onTap: () =>
-                        context.push('/landlord/operations/issue-detail'),
-                  ),
-                  const SizedBox(height: 20),
-                ]),
-              ),
+                );
+              },
             ),
 
             // ── Contracts Section ─────────────────────────────────────────────

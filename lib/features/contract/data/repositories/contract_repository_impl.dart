@@ -41,4 +41,9 @@ class ContractRepositoryImpl implements ContractRepository {
   Future<List<Contract>> getContractsByRoom(String roomId) async {
     return _dataSource.getContractsByRoom(roomId);
   }
+
+  @override
+  Future<List<Contract>> getContractsByProperty(String propertyId) async {
+    return _dataSource.getContractsByProperty(propertyId);
+  }
 }
