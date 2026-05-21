@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_stay_client/features/meter_reading/domain/entities/meter_reading.dart';
+import 'package:smart_stay_client/features/room/domain/entities/room_detail.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../room/presentation/cubit/room_detail_cubit.dart';
@@ -15,6 +17,21 @@ import '../../../room/domain/entities/room.dart';
 
 final _vnd = NumberFormat('#,###', 'vi_VN');
 String _formatVnd(double amount) => '${_vnd.format(amount)} đ';
+
+class _LoadedData {
+  final RoomDetail roomDetail;
+  final List<Invoice> invoices;
+  final List<MeterReading> meterReadings;
+  final List<InventoryItem> inventoryItems;
+  final List<Ticket> tickets;
+  _LoadedData({
+    required this.roomDetail,
+    required this.invoices,
+    required this.meterReadings,
+    required this.inventoryItems,
+    required this.tickets,
+  });
+}
 
 class LandlordRoomDetailScreen extends StatelessWidget {
   final String roomId;
@@ -48,31 +65,37 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
 
     return BlocConsumer<RoomDetailCubit, RoomDetailState>(
       listener: (context, state) {
-        if (state is RoomDetailDeleteLoading) {
-          _isDeleteLoadingVisible = true;
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => const Center(child: CircularProgressIndicator()),
-          );
-        } else if (state is RoomDetailDeleteSuccess) {
-          if (_isDeleteLoadingVisible) {
-            Navigator.of(context, rootNavigator: true).pop();
-            _isDeleteLoadingVisible = false;
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã xóa phòng thành công')),
-          );
-          context.pop(true); // Go back to rooms list and trigger reload
-        } else if (state is RoomDetailDeleteError) {
-          if (_isDeleteLoadingVisible) {
-            Navigator.of(context, rootNavigator: true).pop();
-            _isDeleteLoadingVisible = false;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Lỗi: ${state.message}')));
-        }
+        state.maybeWhen(
+          deleteLoading: () {
+            _isDeleteLoadingVisible = true;
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+          },
+          deleteSuccess: () {
+            if (_isDeleteLoadingVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
+              _isDeleteLoadingVisible = false;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Đã xóa phòng thành công")),
+            );
+            context.pop(true);
+          },
+          deleteError: (message) {
+            if (_isDeleteLoadingVisible) {
+              Navigator.of(context, rootNavigator: true).pop();
+              _isDeleteLoadingVisible = false;
+            }
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Loi: $message')));
+          },
+          orElse: () {},
+        );
       },
       builder: (context, state) {
         return Scaffold(
@@ -81,50 +104,98 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
             slivers: [
               _buildHeader(context, cs, state),
               _buildTabBar(cs),
-              if (state is RoomDetailLoading) ...[
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ] else if (state is RoomDetailError) ...[
-                SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Lỗi tải dữ liệu',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(state.message, style: theme.textTheme.bodySmall),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => context
-                              .read<RoomDetailCubit>()
-                              .loadRoomDetail(widget.roomId),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Thử lại'),
-                        ),
-                      ],
+              ...state.when(
+                initial: () => [
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+                loading: () => [
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+                loaded:
+                    (
+                      roomDetail,
+                      invoices,
+                      meterReadings,
+                      inventoryItems,
+                      tickets,
+                    ) {
+                      final data = _LoadedData(
+                        roomDetail: roomDetail,
+                        invoices: invoices,
+                        meterReadings: meterReadings,
+                        inventoryItems: inventoryItems,
+                        tickets: tickets,
+                      );
+                      if (_tab == 0) {
+                        return [_buildInfoTab(context, theme, cs, data, state)];
+                      }
+                      if (_tab == 1) {
+                        return [_buildPaymentTab(context, theme, cs, state)];
+                      }
+                      if (_tab == 2) {
+                        return [
+                          _buildIssuesTab(context, theme, cs, data, state),
+                        ];
+                      }
+                      if (_tab == 3) {
+                        return [
+                          _buildAssetsTab(context, theme, cs, data, state),
+                        ];
+                      }
+                      return [const SliverToBoxAdapter(child: SizedBox())];
+                    },
+                error: (message) => [
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Lỗi tải dữ liệu',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(message, style: theme.textTheme.bodySmall),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => context
+                                .read<RoomDetailCubit>()
+                                .loadRoomDetail(widget.roomId),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Thử lại'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ] else if (state is RoomDetailLoaded) ...[
-                if (_tab == 0) _buildInfoTab(context, theme, cs, state),
-                if (_tab == 1) _buildPaymentTab(context, theme, cs, state),
-                if (_tab == 2) _buildIssuesTab(context, theme, cs, state),
-                if (_tab == 3) _buildAssetsTab(context, theme, cs, state),
-              ] else ...[
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ],
+                ],
+                deleteLoading: () => [
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+                deleteSuccess: () => [
+                  const SliverFillRemaining(
+                    child: Center(child: Text('Đã xóa')),
+                  ),
+                ],
+                deleteError: (message) => [
+                  SliverFillRemaining(
+                    child: Center(child: Text('Lỗi: $message')),
+                  ),
+                ],
+              ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ),
@@ -147,23 +218,26 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     String statusLabel = '...';
     bool isOccupied = false;
 
-    if (state is RoomDetailLoaded) {
-      final room = state.roomDetail.room;
-      title = 'Phòng ${room.name}';
-      subtitle =
-          '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
-      isOccupied = room.status == RoomStatus.occupied;
+    state.maybeWhen(
+      loaded: (roomDetail, invoices, meterReadings, inventoryItems, tickets) {
+        final room = roomDetail.room;
+        title = 'Phòng ${room.name}';
+        subtitle =
+            '${_formatVnd(room.basePrice)}/tháng · ${room.areaM2.toStringAsFixed(0)}m²';
+        isOccupied = room.status == RoomStatus.occupied;
 
-      if (isOccupied) {
-        statusLabel = 'Đang thuê';
-      } else if (room.status == RoomStatus.reserved) {
-        statusLabel = 'Đã cọc';
-      } else if (room.status == RoomStatus.underRepair) {
-        statusLabel = 'Đang sửa chữa';
-      } else {
-        statusLabel = 'Trống';
-      }
-    }
+        if (isOccupied) {
+          statusLabel = 'Đang thuê';
+        } else if (room.status == RoomStatus.reserved) {
+          statusLabel = 'Đã cọc';
+        } else if (room.status == RoomStatus.underRepair) {
+          statusLabel = 'Đang sửa chữa';
+        } else {
+          statusLabel = 'Trống';
+        }
+      },
+      orElse: () {},
+    );
 
     return SliverAppBar(
       expandedHeight: 140,
@@ -182,18 +256,28 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
         IconButton(
           icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
           onPressed: () {
-            if (state is RoomDetailLoaded) {
-              if (state.roomDetail.room.status == RoomStatus.occupied) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Không thể xóa phòng đang có người ở'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-              } else {
-                _showDeleteConfirmationDialog(context);
-              }
-            }
+            state.maybeWhen(
+              loaded:
+                  (
+                    roomDetail,
+                    invoices,
+                    meterReadings,
+                    inventoryItems,
+                    tickets,
+                  ) {
+                    if (roomDetail.room.status == RoomStatus.occupied) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Không thể xóa phòng đang có người ở'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    } else {
+                      _showDeleteConfirmationDialog(context);
+                    }
+                  },
+              orElse: () {},
+            );
           },
         ),
       ],
@@ -327,12 +411,13 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     BuildContext context,
     ThemeData theme,
     ColorScheme cs,
-    RoomDetailLoaded state,
+    _LoadedData data,
+    RoomDetailState state,
   ) {
-    final rd = state.roomDetail;
+    final rd = data.roomDetail; // ← Sửa từ roomDetail thành data.roomDetail
     final tenant = rd.tenant;
     final contract = rd.contract;
-    final elec = state.latestElectricity;
+    final elec = state.latestElectricity; // ← Giữ nguyên
     final water = state.latestWater;
 
     return SliverPadding(
@@ -346,12 +431,12 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
               icon: Icons.person_outline,
               child:
                   (tenant == null ||
-                      state.roomDetail.room.status != RoomStatus.occupied)
+                      data.roomDetail.room.status != RoomStatus.occupied)
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          state.roomDetail.room.status == RoomStatus.occupied
+                          data.roomDetail.room.status == RoomStatus.occupied
                               ? 'Lỗi dữ liệu: Chưa có thông tin người thuê/hợp đồng'
                               : 'Phòng đang trống',
                           style: const TextStyle(color: Colors.grey),
@@ -491,25 +576,25 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
                     icon: Icons.straighten_rounded,
                     label: 'Diện tích',
                     value:
-                        '${state.roomDetail.room.areaM2.toStringAsFixed(0)} m²',
+                        '${data.roomDetail.room.areaM2.toStringAsFixed(0)} m²',
                   ),
                   const SizedBox(height: 10),
                   _InfoRow(
                     icon: Icons.people_outline,
                     label: 'Số người tối đa',
-                    value: '${state.roomDetail.room.maxOccupants} người',
+                    value: '${data.roomDetail.room.maxOccupants} người',
                   ),
                   const SizedBox(height: 10),
                   _InfoRow(
                     icon: Icons.star_outline_rounded,
                     label: 'Loại phòng',
-                    value: state.roomDetail.room.type,
+                    value: data.roomDetail.room.type,
                   ),
                   const SizedBox(height: 10),
                   _InfoRow(
                     icon: Icons.price_change_outlined,
                     label: 'Giá thuê',
-                    value: _formatVnd(state.roomDetail.room.basePrice),
+                    value: _formatVnd(data.roomDetail.room.basePrice),
                     valueColor: cs.primary,
                   ),
                 ],
@@ -528,7 +613,7 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     BuildContext context,
     ThemeData theme,
     ColorScheme cs,
-    RoomDetailLoaded state,
+    RoomDetailState state,
   ) {
     final invoices = state.sortedInvoices;
 
@@ -618,12 +703,13 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     BuildContext context,
     ThemeData theme,
     ColorScheme cs,
-    RoomDetailLoaded state,
+    _LoadedData data,
+    RoomDetailState state,
   ) {
     final openTickets = state.openTickets;
     final resolvedTickets = state.resolvedTickets;
 
-    if (state.tickets.isEmpty) {
+    if (data.tickets.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: _EmptyState(
@@ -677,9 +763,10 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
     BuildContext context,
     ThemeData theme,
     ColorScheme cs,
-    RoomDetailLoaded state,
+    _LoadedData data,
+    RoomDetailState state,
   ) {
-    final items = state.inventoryItems;
+    final items = data.inventoryItems;
 
     if (items.isEmpty) {
       return SliverFillRemaining(
@@ -712,19 +799,20 @@ class _RoomDetailViewState extends State<_RoomDetailView> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _AssetStat(
                   value: '${items.length}',
                   label: 'Tổng',
                   color: cs.primary,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 _AssetStat(
                   value: '$goodItems',
                   label: 'Tốt',
                   color: Colors.green,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 _AssetStat(
                   value: '$damagedItems',
                   label: 'Hư hỏng',

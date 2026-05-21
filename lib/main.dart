@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/config/app_config.dart';
 import 'core/di/injection_container.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -15,6 +17,9 @@ import 'features/listing/presentation/cubit/listing_cubit.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables from .env file
+  await dotenv.load(fileName: '.env');
+
   await initDI();
   runApp(
     MultiBlocProvider(
@@ -23,24 +28,16 @@ void main() async {
           create: (_) =>
               sl<AuthBloc>()..add(const AuthEvent.checkAuthSession()),
         ),
-        BlocProvider(
-          create: (_) => sl<PropertyCubit>()..loadProperties(),
-        ),
+        BlocProvider(create: (_) => sl<PropertyCubit>()..loadProperties()),
         BlocProvider(
           create: (_) => sl<RoomCubit>(), // Will be loaded dynamically
         ),
-        BlocProvider(
-          create: (_) => sl<TicketCubit>(),
-        ),
+        BlocProvider(create: (_) => sl<TicketCubit>()),
         BlocProvider(
           create: (_) => sl<FinanceSummaryCubit>()..loadFinanceSummary(),
         ),
-        BlocProvider(
-          create: (_) => sl<MeterReadingCubit>()..loadProperties(),
-        ),
-        BlocProvider(
-          create: (_) => sl<ListingCubit>(),
-        ),
+        BlocProvider(create: (_) => sl<MeterReadingCubit>()..loadProperties()),
+        BlocProvider(create: (_) => sl<ListingCubit>()),
       ],
       child: const SmartStayApp(),
     ),

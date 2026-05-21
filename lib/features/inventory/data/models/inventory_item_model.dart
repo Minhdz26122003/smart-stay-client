@@ -28,11 +28,19 @@ class InventoryItemModel {
       return [];
     }
 
+    // Helper function to safely parse integer from dynamic value
+    int parseIntSafe(dynamic val) {
+      if (val == null) return 0;
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val) ?? 0;
+      return 0;
+    }
+
     return InventoryItemModel(
       id: json['id'] as String? ?? '',
       contractId: json['contractId'] as String? ?? '',
       itemName: json['itemName'] as String? ?? '',
-      condition: (json['condition'] as num?)?.toInt() ?? 0,
+      condition: parseIntSafe(json['condition']),  // ✅ Fixed: Safe parsing
       checkInPhotos: parsePhotos(json['checkInPhotos']),
       checkOutPhotos: parsePhotos(json['checkOutPhotos']),
       createdAt: json['createdAt'] != null

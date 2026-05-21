@@ -24,15 +24,15 @@ class RoomDetailCubit extends Cubit<RoomDetailState> {
     required MeterReadingRepository meterReadingRepository,
     required InventoryRepository inventoryRepository,
     required TicketRepository ticketRepository,
-  })  : _roomRepository = roomRepository,
-        _invoiceRepository = invoiceRepository,
-        _meterReadingRepository = meterReadingRepository,
-        _inventoryRepository = inventoryRepository,
-        _ticketRepository = ticketRepository,
-        super(RoomDetailInitial());
+  }) : _roomRepository = roomRepository,
+       _invoiceRepository = invoiceRepository,
+       _meterReadingRepository = meterReadingRepository,
+       _inventoryRepository = inventoryRepository,
+       _ticketRepository = ticketRepository,
+       super(RoomDetailState.initial());
 
   Future<void> loadRoomDetail(String roomId) async {
-    emit(RoomDetailLoading());
+    emit(RoomDetailState.loading());
 
     try {
       // Step 1: Load room detail (contains contractId)
@@ -62,27 +62,31 @@ class RoomDetailCubit extends Cubit<RoomDetailState> {
       // Filter tickets by roomId
       final roomTickets = allTickets.where((t) => t.roomId == roomId).toList();
 
-      emit(RoomDetailLoaded(
-        roomDetail: roomDetail,
-        invoices: invoices,
-        meterReadings: meterReadings,
-        inventoryItems: inventoryItems,
-        tickets: roomTickets,
-      ));
-    } catch (e) {
-      emit(RoomDetailError(e.toString()));
+      emit(
+        RoomDetailState.loaded(
+          roomDetail: roomDetail,
+          invoices: invoices,
+          meterReadings: meterReadings,
+          inventoryItems: inventoryItems,
+          tickets: roomTickets,
+        ),
+      );
+    } catch (e, stackTrace) {
+      print('❌ ERROR: $e');
+      print('📍 STACK TRACE: $stackTrace');
+      emit(RoomDetailState.error(message: e.toString()));
     }
   }
 
   void refresh(String roomId) => loadRoomDetail(roomId);
 
   Future<void> deleteRoom(String roomId) async {
-    emit(RoomDetailDeleteLoading());
+    emit(RoomDetailState.deleteLoading());
     try {
       await _roomRepository.deleteRoom(roomId);
-      emit(RoomDetailDeleteSuccess());
+      emit(RoomDetailState.deleteSuccess());
     } catch (e) {
-      emit(RoomDetailDeleteError(e.toString()));
+      emit(RoomDetailState.deleteError(message: e.toString()));
     }
   }
 }
